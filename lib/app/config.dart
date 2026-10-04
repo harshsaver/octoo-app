@@ -11,6 +11,13 @@ abstract final class ConfigKeys {
   static const apiBase = 'OCTO_API_BASE';
   static const supabaseUrl = 'SUPABASE_URL';
   static const supabaseAnonKey = 'SUPABASE_ANON_KEY';
+
+  /// Where email links and Google send people back (on the Supabase
+  /// redirect allow list). Defaults to `octo://auth-callback`.
+  static const authRedirect = 'OCTO_AUTH_REDIRECT';
+
+  /// `firebase` turns push on (needs the Firebase config files).
+  static const push = 'OCTO_PUSH';
 }
 
 class AppConfig {
@@ -19,7 +26,11 @@ class AppConfig {
     required this.apiBase,
     this.supabaseUrl,
     this.supabaseAnonKey,
+    this.authRedirect = defaultAuthRedirect,
+    this.pushEnabled = false,
   });
+
+  static const defaultAuthRedirect = 'octo://auth-callback';
 
   /// Fake mode with the simulator, for tests and debug builds.
   static final fake = AppConfig(
@@ -31,6 +42,8 @@ class AppConfig {
   final Uri apiBase;
   final Uri? supabaseUrl;
   final String? supabaseAnonKey;
+  final String authRedirect;
+  final bool pushEnabled;
 
   bool get isFake => mode == OctoMode.fake;
 }
@@ -63,6 +76,8 @@ ConfigResult configFromEnvironment({required bool isRelease}) =>
       ConfigKeys.supabaseAnonKey: String.fromEnvironment(
         ConfigKeys.supabaseAnonKey,
       ),
+      ConfigKeys.authRedirect: String.fromEnvironment(ConfigKeys.authRedirect),
+      ConfigKeys.push: String.fromEnvironment(ConfigKeys.push),
     }, isRelease: isRelease);
 
 /// Validates [values]. Fake mode is refused in release builds; real mode
@@ -118,6 +133,19 @@ ConfigResult parseConfig(
   if (real && anonKey.isEmpty) {
     problems.add('${ConfigKeys.supabaseAnonKey} is not set');
   }
+  final redirectText = text(ConfigKeys.authRedirect);
+  final redirect = Uri.tryParse(
+    redirectText.isEmpty ? AppConfig.defaultAuthRedirect : redirectText,
+  );
+  if (redirect == null ||
+      redirect.scheme.isEmpty ||
+      redirect.scheme == 'http') {
+    problems.add('${ConfigKeys.authRedirect} must be an app link or https URL');
+  }
+  final pushText = text(ConfigKeys.push);
+  if (pushText.isNotEmpty && pushText != 'firebase') {
+    problems.add('${ConfigKeys.push} must be firebase or empty');
+  }
   if (problems.isNotEmpty) return ConfigProblem(problems);
   return ConfigOk(
     AppConfig(
@@ -125,6 +153,8 @@ ConfigResult parseConfig(
       apiBase: apiBase,
       supabaseUrl: supabaseUrl,
       supabaseAnonKey: anonKey.isEmpty ? null : anonKey,
+      authRedirect: redirect!.toString(),
+      pushEnabled: pushText == 'firebase',
     ),
   );
 }

@@ -5,11 +5,81 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../app/app_settings.dart';
 import '../../app/providers.dart';
 import '../../data/backend/octo_backend.dart';
+import '../../data/sign_out.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 import '../lock/app_lock.dart';
+
+Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+  final l = AppLocalizations.of(context);
+  final colors = OctoTheme.of(context);
+  final sessions = ref.read(sessionsControllerProvider);
+  final unsent = sessions.hasUnsent;
+  final removals = await sessions.hasPendingRemovals();
+  if (!context.mounted) return;
+  final confirmed = await showModalBottomSheet<bool>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheet) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          OctoSpace.xl,
+          0,
+          OctoSpace.xl,
+          OctoSpace.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.signOutTitle, style: Theme.of(sheet).textTheme.titleLarge),
+            const SizedBox(height: OctoSpace.sm),
+            Text(l.signOutBody),
+            if (unsent) ...[
+              const SizedBox(height: OctoSpace.sm),
+              Text(l.signOutUnsent, style: TextStyle(color: colors.needsYou)),
+            ],
+            if (removals) ...[
+              const SizedBox(height: OctoSpace.sm),
+              Text(l.signOutRemovals, style: TextStyle(color: colors.needsYou)),
+            ],
+            const SizedBox(height: OctoSpace.xl),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.needsYou,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(sheet, true),
+              child: Text(l.signOut),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(sheet, false),
+              child: Text(l.cancel),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (confirmed != true) return;
+  await signOutAndForget(
+    registrar: ref.read(pushRegistrarProvider),
+    sessions: sessions,
+    db: ref.read(databaseProvider),
+    shots: ref.read(screenshotStoreProvider),
+    dirs: ref.read(accountDirsProvider),
+    prefs: ref.read(sharedPreferencesProvider),
+    auth: ref.read(authServiceProvider),
+  );
+  // Everything per account starts fresh at the next sign-in, even for the
+  // same person.
+  ref
+    ..invalidate(databaseProvider)
+    ..invalidate(screenshotStoreProvider)
+    ..invalidate(pushRegistrarProvider);
+}
 
 final packageInfoProvider = FutureProvider<PackageInfo>(
   (ref) => PackageInfo.fromPlatform(),
@@ -71,6 +141,13 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 title: Text(account.name),
                 subtitle: isFake ? Text(l.accountFake) : null,
+              ),
+              ListTile(
+                title: Text(
+                  l.signOut,
+                  style: TextStyle(color: colors.needsYou),
+                ),
+                onTap: () => _confirmSignOut(context, ref),
               ),
             ],
           ),

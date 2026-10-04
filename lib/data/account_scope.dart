@@ -13,6 +13,21 @@ class Account {
   final String name;
 
   static const fake = Account(userId: 'local', name: 'Harsh');
+
+  /// No one is signed in. Per-account state built for it is empty and never
+  /// stored (see `databaseProvider`).
+  static const signedOut = Account(userId: '', name: '');
+
+  bool get isSignedOut => userId.isEmpty;
+}
+
+/// The app's root directories, resolved once at startup; each account gets
+/// its own folders under them.
+class AppRoots {
+  const AppRoots({required this.support, required this.cache});
+
+  final Directory support;
+  final Directory cache;
 }
 
 /// Where one account's files live. Each account has its own database and

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="Octo"
         android:name="${applicationName}"
@@ -23,6 +25,13 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Sign-in returns here (OCTO_AUTH_REDIRECT, on the Supabase allow list). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="octo" android:host="auth-callback" />
+            </intent-filter>
             <!-- The enrollment QR is an October link: https://www.october.dev/octo/add#… -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

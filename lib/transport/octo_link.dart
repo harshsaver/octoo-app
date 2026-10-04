@@ -107,6 +107,9 @@ enum PairingFailureKind {
 
   /// The QR or typed code isn't one this app can use.
   invalidCode,
+
+  /// This build can't connect to computers yet (real mode before RelayLink).
+  notAvailable,
 }
 
 /// Pairing ended without pairing. [reason] is her computer's own sentence
