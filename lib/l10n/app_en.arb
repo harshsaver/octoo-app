@@ -1,0 +1,535 @@
+{
+  "@@locale": "en",
+  "appTitle": "Octo",
+  "notConfiguredTitle": "This build isn't configured",
+  "notConfiguredBody": "This copy of Octo can't connect to October yet. Install Octo from the App Store or Google Play.",
+  "taskQueued": "Waiting its turn",
+  "taskWaitingOk": "Waiting for {person}",
+  "@taskWaitingOk": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Mom"
+      }
+    }
+  },
+  "taskRunning": "Working",
+  "taskDone": "Done",
+  "taskGaveUp": "Back with you",
+  "taskBlocked": "Stopped by a safety rule",
+  "taskRefused": "Not allowed by your rules",
+  "taskDeclined": "{person} said no",
+  "@taskDeclined": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Mom"
+      }
+    }
+  },
+  "taskNoAnswer": "{person} didn't answer",
+  "@taskNoAnswer": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Mom"
+      }
+    }
+  },
+  "taskStopped": "Stopped",
+  "taskFailed": "Didn't work",
+  "taskUnknown": "Octo sent an update this app can't show yet. Update the app.",
+  "changeOpen": "Open apps",
+  "changeInstall": "Install apps",
+  "changeSignIn": "Sign in",
+  "changeSend": "Send messages",
+  "changeDelete": "Delete things",
+  "changeSettings": "Change settings",
+  "changeCall": "Join calls",
+  "changeOther": "Other changes",
+  "changeUnknown": "Something else",
+  "screenshotOnHerComputer": "Screenshot on her computer",
+  "screenshotUnavailable": "Screenshot no longer available",
+  "octosTitle": "Octos",
+  "edit": "Edit",
+  "done": "Done",
+  "cancel": "Cancel",
+  "search": "Search",
+  "addOcto": "Add an Octo",
+  "settings": "Settings",
+  "playMom": "Play Mom (simulator)",
+  "emptyTitle": "Add your first Octo",
+  "emptyHint": "Open Octo on the family computer and choose Add a family member.",
+  "noMatches": "No Octos match “{query}”",
+  "@noMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "previewWorking": "Working… step {step}",
+  "@previewWorking": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "previewWaiting": "Waiting for {person} to say OK",
+  "@previewWaiting": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "previewOffline": "Offline · last seen {ago}",
+  "@previewOffline": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "previewNeedsHand": "{person} needs a hand",
+  "@previewNeedsHand": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "previewEmpty": "Ask Octo something",
+  "previewPhoto": "Photo",
+  "previewYou": "You: {text}",
+  "@previewYou": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "remove": "Remove",
+  "markRead": "Read",
+  "markUnread": "Unread",
+  "pin": "Pin",
+  "unpin": "Unpin",
+  "removeTitle": "Remove {person}'s Octo?",
+  "@removeTitle": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "removeBodyOwner": "{computer} will be removed for everyone who helps with it, not just you.",
+  "@removeBodyOwner": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "removeBodyHelper": "You'll stop helping with {computer} from this phone.",
+  "@removeBodyHelper": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFailed": "Couldn't remove it. {message}",
+  "@removeFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "removedBanner": "{person}'s computer removed you",
+  "@removedBanner": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "unread": "Unread",
+  "muted": "Muted",
+  "pinned": "Pinned",
+  "timeNow": "now",
+  "timeYesterday": "Yesterday",
+  "agoMinutes": "{n} min ago",
+  "@agoMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoHours": "{n} h ago",
+  "@agoHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoDays": "{n} d ago",
+  "@agoDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoJustNow": "just now",
+  "statusOnline": "Online",
+  "statusWorking": "Working…",
+  "statusConnecting": "Connecting…",
+  "statusLastSeen": "Last seen {ago}",
+  "@statusLastSeen": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "statusOffline": "Offline",
+  "askOctoPlaceholder": "Ask Octo…",
+  "tellPlaceholder": "Tell {person}…",
+  "@tellPlaceholder": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "toggleAskOcto": "Ask Octo",
+  "toggleTell": "Tell {person}",
+  "@toggleTell": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "send": "Send",
+  "quickJobs": "Quick jobs",
+  "composerOffline": "{person}'s computer is offline. We'll send this when it's back.",
+  "@composerOffline": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "composerRemoved": "{person}'s computer removed you.",
+  "@composerRemoved": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "mayHint": "Octo will ask {person} before it {actions}.",
+  "@mayHint": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      },
+      "actions": {
+        "type": "String"
+      }
+    }
+  },
+  "charactersLeft": "{n} left",
+  "@charactersLeft": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "mayOpen": "opens apps",
+  "mayInstall": "installs apps",
+  "maySignIn": "signs in",
+  "maySend": "sends messages",
+  "mayDelete": "deletes things",
+  "maySettings": "changes settings",
+  "mayCall": "joins calls",
+  "mayOther": "changes anything else",
+  "listAnd": "{a} and {b}",
+  "@listAnd": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "jobWifi": "Check Wi-Fi",
+  "jobCall": "Join a call",
+  "jobFind": "Find an email or file",
+  "jobBigger": "Bigger text or sound",
+  "jobInstall": "Install an app",
+  "jobScreenDescribe": "What's on screen?",
+  "jobSeeScreen": "See her screen",
+  "jobWifiText": "Check the Wi-Fi and internet",
+  "jobScreenDescribeText": "What's on the screen right now?",
+  "jobCallPrefill": "Join a call: ",
+  "jobFindPrefill": "Find: ",
+  "jobBiggerPrefill": "Make bigger: ",
+  "jobInstallPrefill": "Install: ",
+  "lineWaitingTurn": "Waiting its turn",
+  "lineWaitingForHer": "Waiting for {person} to say OK",
+  "@lineWaitingForHer": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "lineSheSaidOk": "{person} said OK",
+  "@lineSheSaidOk": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "deliveryPending": "Not sent yet",
+  "deliverySending": "Sending…",
+  "deliveryUncertain": "Couldn't confirm it reached {person}'s computer. Check the activity before trying again.",
+  "@deliveryUncertain": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "deliveryRejected": "Not sent: {message}",
+  "@deliveryRejected": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "deliveryRejectedPlain": "Her computer didn't take this.",
+  "retryNote": "Sent again. It may run twice.",
+  "tryAgain": "Try again",
+  "copy": "Copy",
+  "copied": "Copied",
+  "stop": "Stop",
+  "details": "Details",
+  "reply": "Reply",
+  "doIt": "Octo, do it",
+  "seeHerScreen": "See her screen",
+  "helpAsk": "Can you take a look?",
+  "askedScreen": "Asked {person} to show her screen",
+  "@askedScreen": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "screenRefused": "{person} said no to showing her screen",
+  "@screenRefused": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "resultDone": "Done.",
+  "resultGaveUp": "I couldn't finish this. It's back with you.",
+  "resultBlocked": "I stopped because of a safety rule.",
+  "resultRefused": "Your rules don't allow this.",
+  "resultDeclined": "{person} said no.",
+  "@resultDeclined": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "resultNoAnswer": "{person} didn't answer.",
+  "@resultNoAnswer": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "resultStopped": "Stopped.",
+  "resultFailed": "That didn't work.",
+  "liveStep": "Step {n}",
+  "@liveStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "liveStarting": "Starting…",
+  "octoToldHer": "Octo told her: {answer}",
+  "@octoToldHer": {
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "replyingTo": "Replying to “{text}”",
+  "@replyingTo": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "fromName": "{name} → Octo",
+  "@fromName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stopOffline": "{person}'s computer is offline.",
+  "@stopOffline": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "stopRefused": "That task already finished.",
+  "stopNoReply": "No answer from her computer. It may still stop.",
+  "welcome": "Hi {helper}! I'm {person}'s Octo. Ask me to do something on her computer, like check the Wi-Fi or make the text bigger. I'll always ask her first before changing anything.",
+  "@welcome": {
+    "placeholders": {
+      "helper": {
+        "type": "String"
+      },
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "bubbleLabel": "{sender}, {time}: {text}",
+  "@bubbleLabel": {
+    "placeholders": {
+      "sender": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "octoName": "Octo",
+  "youName": "You",
+  "imageFromOcto": "Screenshot from Octo",
+  "imageFromHer": "Screenshot from {person}",
+  "@imageFromHer": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "share": "Share",
+  "close": "Close",
+  "timelineTitle": "Timeline",
+  "timelineAsked": "{name} asked",
+  "@timelineAsked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "timelineStarted": "Started",
+  "timelineEnded": "Ended",
+  "activityMayBeMissing": "Older activity may be missing",
+  "scanCaption": "On the family computer, click the floating Octo, open Family, and choose Add a family member. Point your camera at the code.",
+  "typeCodeInstead": "Type the code instead",
+  "smallPrint": "Only add a family member's computer while you're with them, or on a call with them.",
+  "useSimulator": "Use a simulated computer",
+  "cameraUnavailable": "The camera isn't available. You can type the code instead.",
+  "typeCodeTitle": "Type the code",
+  "typeCodeHint": "8 letters or numbers",
+  "continueLabel": "Continue",
+  "codeNotRecognised": "That isn't an Octo code. Check it and try again.",
+  "connecting": "Connecting…",
+  "compareKeyBody": "{computer} shows the same key. Check they match, and ask them to tap OK.",
+  "@compareKeyBody": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "theyMatch": "They match",
+  "theyDontMatch": "They don't match",
+  "mismatchExplain": "The keys didn't match, so we stopped. Someone else may be trying to add this computer.",
+  "waitingForOk": "Waiting for someone to tap OK on {computer}…",
+  "@waitingForOk": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "pairOffline": "{computer} went offline. Try again when it's back.",
+  "@pairOffline": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "pairTimedOut": "No one answered on {computer}.",
+  "@pairTimedOut": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "pairNotAdded": "Not added",
+  "scanAgain": "Scan again",
+  "nameTitle": "Who is it for?",
+  "nameOther": "Their name",
+  "languageTitle": "Their language",
+  "computerNameLabel": "The computer's name",
+  "next": "Next",
+  "lookTitle": "Pick their Octo",
+  "setupFailed": "Couldn't finish setting up. {message}",
+  "@setupFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsWhy": "So you know when {person} needs you.",
+  "@notificationsWhy": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  }
+}

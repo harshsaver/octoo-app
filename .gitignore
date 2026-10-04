@@ -1,0 +1,39 @@
+
+# October (generated — context bus / browser MCP)
+.codex/config.toml
+.codex/hooks.json
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+coverage/
+**/failures/*.png
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/google-services.json
+**/*.jks
+**/*.keystore
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GoogleService-Info.plist
+**/xcuserdata/
+
+# Build config: only the committed examples are tracked
+config/*.json
+!config/example.json
+!config/fake.json

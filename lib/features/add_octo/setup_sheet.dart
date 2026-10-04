@@ -1,0 +1,406 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:clock/clock.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app/providers.dart';
+import '../../data/backend/octo_backend.dart';
+import '../../data/db/database.dart';
+import '../../data/enrollment/enrollment_repository.dart';
+import '../../l10n/app_localizations.dart';
+import '../../transport/octo_link.dart';
+import '../../ui/octo_avatar.dart';
+import '../../ui/octo_looks.dart';
+import '../../ui/theme.dart';
+import '../../ui/tokens.dart';
+
+const _nameChips = ['Mom', 'Dad', 'Nani', 'Dadi', 'Grandma', 'Grandpa'];
+
+const _languages = [
+  ('en', 'English'),
+  ('hi', 'हिन्दी'),
+  ('es', 'Español'),
+  ('fr', 'Français'),
+  ('de', 'Deutsch'),
+  ('pt', 'Português'),
+  ('bn', 'বাংলা'),
+  ('ur', 'اردو'),
+  ('ta', 'தமிழ்'),
+  ('zh', '中文'),
+];
+
+/// The sheet after a code is read: pairing (scanned → compare key → waiting
+/// for her → outcome), then "Who is it for?", then "Pick their Octo".
+/// Pops with the new computer's id, or null. Closing it cancels pairing.
+class SetupSheet extends ConsumerStatefulWidget {
+  const SetupSheet({super.key, required this.enrollment});
+
+  final Enrollment enrollment;
+
+  static Future<String?> show(BuildContext context, Enrollment enrollment) =>
+      showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (_) => SetupSheet(enrollment: enrollment),
+      );
+
+  @override
+  ConsumerState<SetupSheet> createState() => _SetupSheetState();
+}
+
+enum _Step { pairing, name, look, saving }
+
+class _SetupSheetState extends ConsumerState<SetupSheet> {
+  StreamSubscription<PairingProgress>? _pairing;
+  PairingProgress? _progress;
+  String? _computerName;
+  PairedComputer? _paired;
+  _Step _step = _Step.pairing;
+
+  final _person = TextEditingController();
+  final _computer = TextEditingController();
+  String _language = 'en';
+  OctoLook _look = OctoLook.orange;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final name = ref.read(accountProvider).name;
+    final device = Platform.isIOS ? "$name's iPhone" : "$name's Android phone";
+    _pairing = ref
+        .read(octoLinkProvider)
+        .pair(
+          widget.enrollment.pairPayload,
+          helperName: name,
+          deviceLabel: device,
+        )
+        .listen((p) {
+          if (!mounted) return;
+          if (p is PairingScanned) _computerName = p.computerName;
+          if (p is PairingPaired) {
+            _paired = p.computer;
+            _computer.text = p.computer.computerName;
+            if (p.computer.person != null) _person.text = p.computer.person!;
+            unawaited(HapticFeedback.mediumImpact());
+            setState(() => _step = _Step.name);
+            return;
+          }
+          setState(() => _progress = p);
+        });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_pairing?.cancel());
+    _person.dispose();
+    _computer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _finish() async {
+    final paired = _paired!;
+    final person = _person.text.trim();
+    final computerName = _computer.text.trim().isEmpty
+        ? paired.computerName
+        : _computer.text.trim();
+    setState(() {
+      _step = _Step.saving;
+      _error = null;
+    });
+    final l = AppLocalizations.of(context);
+    final helper = ref.read(accountProvider).name;
+    final db = ref.read(databaseProvider);
+    final now = clock.now().millisecondsSinceEpoch;
+    try {
+      // The backend owns the profile (PLAN §3.8): PATCH first.
+      await ref
+          .read(backendProvider)
+          .patchComputer(
+            paired.computerId,
+            name: computerName,
+            person: person,
+            language: _language,
+            octo: _look.id,
+          );
+      final count = (await db.allComputers()).length;
+      await db.upsertComputer(
+        ComputersCompanion.insert(
+          id: paired.computerId,
+          hostId: Value(paired.hostId),
+          bind: Value(paired.hostId),
+          computerName: computerName,
+          person: person,
+          language: Value(_language),
+          look: Value(_look.id),
+          role: Value(widget.enrollment.mode.name),
+          sortOrder: Value(count),
+          lastReadAt: Value(now),
+          addedAt: now,
+        ),
+      );
+      final session = await ref
+          .read(sessionsControllerProvider)
+          .ensure(paired.computerId, bind: paired.hostId);
+      await session.addNote('welcome', l.welcome(helper, person));
+      // Her computer learns the names once it's connected (best effort; the
+      // full profile sync loop comes with Details).
+      unawaited(
+        _sendProfileWhenConnected(session.computerId, person, computerName),
+      );
+      if (mounted) Navigator.pop(context, paired.computerId);
+    } on BackendException catch (e) {
+      setState(() {
+        _step = _Step.look;
+        _error = l.setupFailed(e.message);
+      });
+    }
+  }
+
+  Future<void> _sendProfileWhenConnected(
+    String computerId,
+    String person,
+    String computerName,
+  ) async {
+    final controller = ref.read(sessionsControllerProvider);
+    for (var i = 0; i < 20; i++) {
+      final session = controller.session(computerId);
+      if (session != null && session.isConnected) {
+        await session.sendProfile(
+          person: person,
+          computer: computerName,
+          language: _language,
+        );
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          OctoSpace.xl,
+          0,
+          OctoSpace.xl,
+          OctoSpace.xl + bottom,
+        ),
+        child: AnimatedSwitcher(
+          duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+              ? Duration.zero
+              : OctoMotion.medium,
+          child: switch (_step) {
+            _Step.pairing => _pairingView(context),
+            _Step.name => _nameView(context),
+            _Step.look || _Step.saving => _lookView(context),
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _column(List<Widget> children) => Column(
+    key: ValueKey(_step.name + (_progress?.runtimeType.toString() ?? '')),
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: children,
+  );
+
+  Widget _pairingView(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colors = OctoTheme.of(context);
+    final computer = _computerName ?? widget.enrollment.computerName ?? '';
+    Widget title(String t) => Text(
+      t,
+      style: theme.textTheme.headlineSmall,
+      textAlign: TextAlign.center,
+    );
+    Widget body(String t) =>
+        Text(t, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center);
+
+    return switch (_progress) {
+      null || PairingScanned() => _column([
+        const Center(child: OctoAvatar(size: 96)),
+        const SizedBox(height: OctoSpace.lg),
+        title(computer.isEmpty ? l.connecting : computer),
+        const SizedBox(height: OctoSpace.sm),
+        body(l.connecting),
+        const SizedBox(height: OctoSpace.lg),
+      ]),
+      PairingCompareCode(:final code, :final confirm) => _column([
+        Semantics(
+          label: code.split('').join(' '),
+          excludeSemantics: true,
+          child: Text(
+            '${code.substring(0, 3)} ${code.substring(3)}',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.displayMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+        const SizedBox(height: OctoSpace.md),
+        body(l.compareKeyBody(computer)),
+        const SizedBox(height: OctoSpace.xl),
+        FilledButton(onPressed: () => confirm(true), child: Text(l.theyMatch)),
+        const SizedBox(height: OctoSpace.sm),
+        TextButton(
+          onPressed: () => confirm(false),
+          child: Text(l.theyDontMatch),
+        ),
+      ]),
+      PairingWaitingForHer() => _column([
+        const Center(child: OctoAvatar(size: 120, mood: OctoMood.waiting)),
+        const SizedBox(height: OctoSpace.lg),
+        body(l.waitingForOk(computer)),
+        const SizedBox(height: OctoSpace.lg),
+      ]),
+      PairingFailed(:final kind, :final reason, :final isFinal) => _column([
+        const Center(child: OctoAvatar(size: 96, mood: OctoMood.sleepy)),
+        const SizedBox(height: OctoSpace.lg),
+        title(l.pairNotAdded),
+        const SizedBox(height: OctoSpace.sm),
+        body(switch (kind) {
+          PairingFailureKind.reportedByComputer => reason ?? '',
+          PairingFailureKind.codeMismatch => l.mismatchExplain,
+          PairingFailureKind.offline => l.pairOffline(computer),
+          PairingFailureKind.timedOut => l.pairTimedOut(computer),
+          PairingFailureKind.invalidCode => l.codeNotRecognised,
+        }),
+        const SizedBox(height: OctoSpace.xl),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: colors.accentText),
+          onPressed: () => Navigator.pop(context),
+          child: Text(isFinal ? l.scanAgain : l.tryAgain),
+        ),
+      ]),
+      PairingPaired() => _column(const []),
+    };
+  }
+
+  Widget _nameView(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return _column([
+      Text(l.nameTitle, style: theme.textTheme.headlineSmall),
+      const SizedBox(height: OctoSpace.md),
+      Wrap(
+        spacing: OctoSpace.sm,
+        runSpacing: OctoSpace.sm,
+        children: [
+          for (final n in _nameChips)
+            ChoiceChip(
+              label: Text(n),
+              selected: _person.text == n,
+              onSelected: (_) => setState(() => _person.text = n),
+            ),
+        ],
+      ),
+      const SizedBox(height: OctoSpace.md),
+      TextField(
+        controller: _person,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(labelText: l.nameOther),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: OctoSpace.xl),
+      Text(l.languageTitle, style: theme.textTheme.titleMedium),
+      const SizedBox(height: OctoSpace.sm),
+      Wrap(
+        spacing: OctoSpace.sm,
+        runSpacing: OctoSpace.sm,
+        children: [
+          for (final (code, name) in _languages)
+            ChoiceChip(
+              label: Text(name),
+              selected: _language == code,
+              onSelected: (_) => setState(() => _language = code),
+            ),
+        ],
+      ),
+      const SizedBox(height: OctoSpace.xl),
+      TextField(
+        controller: _computer,
+        decoration: InputDecoration(labelText: l.computerNameLabel),
+      ),
+      const SizedBox(height: OctoSpace.xl),
+      FilledButton(
+        onPressed: _person.text.trim().isEmpty
+            ? null
+            : () => setState(() => _step = _Step.look),
+        child: Text(l.next),
+      ),
+    ]);
+  }
+
+  Widget _lookView(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colors = OctoTheme.of(context);
+    final saving = _step == _Step.saving;
+    return _column([
+      Text(l.lookTitle, style: theme.textTheme.headlineSmall),
+      const SizedBox(height: OctoSpace.lg),
+      Center(child: OctoAvatar(look: _look, size: 120)),
+      const SizedBox(height: OctoSpace.lg),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final look in OctoLook.values)
+              Padding(
+                padding: const EdgeInsets.only(right: OctoSpace.sm),
+                child: Semantics(
+                  button: true,
+                  selected: look == _look,
+                  label: look.label,
+                  excludeSemantics: true,
+                  child: InkResponse(
+                    onTap: saving ? null : () => setState(() => _look = look),
+                    radius: 32,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: look == _look
+                              ? colors.accent
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                      child: OctoAvatar(look: look, size: 52),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      if (_error != null) ...[
+        const SizedBox(height: OctoSpace.md),
+        Text(_error!, style: TextStyle(color: colors.needsYou)),
+      ],
+      const SizedBox(height: OctoSpace.xl),
+      FilledButton(
+        onPressed: saving ? null : _finish,
+        child: saving
+            ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(l.done),
+      ),
+    ]);
+  }
+}

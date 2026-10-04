@@ -1,0 +1,1196 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo'**
+  String get appTitle;
+
+  /// No description provided for @notConfiguredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This build isn\'t configured'**
+  String get notConfiguredTitle;
+
+  /// No description provided for @notConfiguredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of Octo can\'t connect to October yet. Install Octo from the App Store or Google Play.'**
+  String get notConfiguredBody;
+
+  /// No description provided for @taskQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting its turn'**
+  String get taskQueued;
+
+  /// No description provided for @taskWaitingOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {person}'**
+  String taskWaitingOk(String person);
+
+  /// No description provided for @taskRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get taskRunning;
+
+  /// No description provided for @taskDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get taskDone;
+
+  /// No description provided for @taskGaveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Back with you'**
+  String get taskGaveUp;
+
+  /// No description provided for @taskBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped by a safety rule'**
+  String get taskBlocked;
+
+  /// No description provided for @taskRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed by your rules'**
+  String get taskRefused;
+
+  /// No description provided for @taskDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} said no'**
+  String taskDeclined(String person);
+
+  /// No description provided for @taskNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} didn\'t answer'**
+  String taskNoAnswer(String person);
+
+  /// No description provided for @taskStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get taskStopped;
+
+  /// No description provided for @taskFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t work'**
+  String get taskFailed;
+
+  /// No description provided for @taskUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo sent an update this app can\'t show yet. Update the app.'**
+  String get taskUnknown;
+
+  /// No description provided for @changeOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open apps'**
+  String get changeOpen;
+
+  /// No description provided for @changeInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install apps'**
+  String get changeInstall;
+
+  /// No description provided for @changeSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get changeSignIn;
+
+  /// No description provided for @changeSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send messages'**
+  String get changeSend;
+
+  /// No description provided for @changeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete things'**
+  String get changeDelete;
+
+  /// No description provided for @changeSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Change settings'**
+  String get changeSettings;
+
+  /// No description provided for @changeCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Join calls'**
+  String get changeCall;
+
+  /// No description provided for @changeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other changes'**
+  String get changeOther;
+
+  /// No description provided for @changeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get changeUnknown;
+
+  /// No description provided for @screenshotOnHerComputer.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot on her computer'**
+  String get screenshotOnHerComputer;
+
+  /// No description provided for @screenshotUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot no longer available'**
+  String get screenshotUnavailable;
+
+  /// No description provided for @octosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Octos'**
+  String get octosTitle;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get search;
+
+  /// No description provided for @addOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an Octo'**
+  String get addOcto;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @playMom.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Mom (simulator)'**
+  String get playMom;
+
+  /// No description provided for @emptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first Octo'**
+  String get emptyTitle;
+
+  /// No description provided for @emptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Octo on the family computer and choose Add a family member.'**
+  String get emptyHint;
+
+  /// No description provided for @noMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No Octos match “{query}”'**
+  String noMatches(String query);
+
+  /// No description provided for @previewWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working… step {step}'**
+  String previewWorking(int step);
+
+  /// No description provided for @previewWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {person} to say OK'**
+  String previewWaiting(String person);
+
+  /// No description provided for @previewOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline · last seen {ago}'**
+  String previewOffline(String ago);
+
+  /// No description provided for @previewNeedsHand.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} needs a hand'**
+  String previewNeedsHand(String person);
+
+  /// No description provided for @previewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Octo something'**
+  String get previewEmpty;
+
+  /// No description provided for @previewPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get previewPhoto;
+
+  /// No description provided for @previewYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You: {text}'**
+  String previewYou(String text);
+
+  /// No description provided for @mute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get mute;
+
+  /// No description provided for @unmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get unmute;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @markRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get markRead;
+
+  /// No description provided for @markUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get markUnread;
+
+  /// No description provided for @pin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get pin;
+
+  /// No description provided for @unpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get unpin;
+
+  /// No description provided for @removeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {person}\'s Octo?'**
+  String removeTitle(String person);
+
+  /// No description provided for @removeBodyOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'{computer} will be removed for everyone who helps with it, not just you.'**
+  String removeBodyOwner(String computer);
+
+  /// No description provided for @removeBodyHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll stop helping with {computer} from this phone.'**
+  String removeBodyHelper(String computer);
+
+  /// No description provided for @removeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t remove it. {message}'**
+  String removeFailed(String message);
+
+  /// No description provided for @removedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer removed you'**
+  String removedBanner(String person);
+
+  /// No description provided for @unread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get unread;
+
+  /// No description provided for @muted.
+  ///
+  /// In en, this message translates to:
+  /// **'Muted'**
+  String get muted;
+
+  /// No description provided for @pinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get pinned;
+
+  /// No description provided for @timeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get timeNow;
+
+  /// No description provided for @timeYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get timeYesterday;
+
+  /// No description provided for @agoMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min ago'**
+  String agoMinutes(int n);
+
+  /// No description provided for @agoHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} h ago'**
+  String agoHours(int n);
+
+  /// No description provided for @agoDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} d ago'**
+  String agoDays(int n);
+
+  /// No description provided for @agoJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get agoJustNow;
+
+  /// No description provided for @statusOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get statusOnline;
+
+  /// No description provided for @statusWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get statusWorking;
+
+  /// No description provided for @statusConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get statusConnecting;
+
+  /// No description provided for @statusLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {ago}'**
+  String statusLastSeen(String ago);
+
+  /// No description provided for @statusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get statusOffline;
+
+  /// No description provided for @askOctoPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Octo…'**
+  String get askOctoPlaceholder;
+
+  /// No description provided for @tellPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell {person}…'**
+  String tellPlaceholder(String person);
+
+  /// No description provided for @toggleAskOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Octo'**
+  String get toggleAskOcto;
+
+  /// No description provided for @toggleTell.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell {person}'**
+  String toggleTell(String person);
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @quickJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick jobs'**
+  String get quickJobs;
+
+  /// No description provided for @composerOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer is offline. We\'ll send this when it\'s back.'**
+  String composerOffline(String person);
+
+  /// No description provided for @composerRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer removed you.'**
+  String composerRemoved(String person);
+
+  /// No description provided for @mayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo will ask {person} before it {actions}.'**
+  String mayHint(String person, String actions);
+
+  /// No description provided for @charactersLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} left'**
+  String charactersLeft(int n);
+
+  /// No description provided for @mayOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'opens apps'**
+  String get mayOpen;
+
+  /// No description provided for @mayInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'installs apps'**
+  String get mayInstall;
+
+  /// No description provided for @maySignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'signs in'**
+  String get maySignIn;
+
+  /// No description provided for @maySend.
+  ///
+  /// In en, this message translates to:
+  /// **'sends messages'**
+  String get maySend;
+
+  /// No description provided for @mayDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'deletes things'**
+  String get mayDelete;
+
+  /// No description provided for @maySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'changes settings'**
+  String get maySettings;
+
+  /// No description provided for @mayCall.
+  ///
+  /// In en, this message translates to:
+  /// **'joins calls'**
+  String get mayCall;
+
+  /// No description provided for @mayOther.
+  ///
+  /// In en, this message translates to:
+  /// **'changes anything else'**
+  String get mayOther;
+
+  /// No description provided for @listAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'{a} and {b}'**
+  String listAnd(String a, String b);
+
+  /// No description provided for @jobWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Wi-Fi'**
+  String get jobWifi;
+
+  /// No description provided for @jobCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a call'**
+  String get jobCall;
+
+  /// No description provided for @jobFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find an email or file'**
+  String get jobFind;
+
+  /// No description provided for @jobBigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Bigger text or sound'**
+  String get jobBigger;
+
+  /// No description provided for @jobInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install an app'**
+  String get jobInstall;
+
+  /// No description provided for @jobScreenDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s on screen?'**
+  String get jobScreenDescribe;
+
+  /// No description provided for @jobSeeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'See her screen'**
+  String get jobSeeScreen;
+
+  /// No description provided for @jobWifiText.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the Wi-Fi and internet'**
+  String get jobWifiText;
+
+  /// No description provided for @jobScreenDescribeText.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s on the screen right now?'**
+  String get jobScreenDescribeText;
+
+  /// No description provided for @jobCallPrefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a call: '**
+  String get jobCallPrefill;
+
+  /// No description provided for @jobFindPrefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Find: '**
+  String get jobFindPrefill;
+
+  /// No description provided for @jobBiggerPrefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Make bigger: '**
+  String get jobBiggerPrefill;
+
+  /// No description provided for @jobInstallPrefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Install: '**
+  String get jobInstallPrefill;
+
+  /// No description provided for @lineWaitingTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting its turn'**
+  String get lineWaitingTurn;
+
+  /// No description provided for @lineWaitingForHer.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {person} to say OK'**
+  String lineWaitingForHer(String person);
+
+  /// No description provided for @lineSheSaidOk.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} said OK'**
+  String lineSheSaidOk(String person);
+
+  /// No description provided for @deliveryPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent yet'**
+  String get deliveryPending;
+
+  /// No description provided for @deliverySending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get deliverySending;
+
+  /// No description provided for @deliveryUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm it reached {person}\'s computer. Check the activity before trying again.'**
+  String deliveryUncertain(String person);
+
+  /// No description provided for @deliveryRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent: {message}'**
+  String deliveryRejected(String message);
+
+  /// No description provided for @deliveryRejectedPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Her computer didn\'t take this.'**
+  String get deliveryRejectedPlain;
+
+  /// No description provided for @retryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent again. It may run twice.'**
+  String get retryNote;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
+
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get reply;
+
+  /// No description provided for @doIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo, do it'**
+  String get doIt;
+
+  /// No description provided for @seeHerScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'See her screen'**
+  String get seeHerScreen;
+
+  /// No description provided for @helpAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Can you take a look?'**
+  String get helpAsk;
+
+  /// No description provided for @askedScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Asked {person} to show her screen'**
+  String askedScreen(String person);
+
+  /// No description provided for @screenRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} said no to showing her screen'**
+  String screenRefused(String person);
+
+  /// No description provided for @resultDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done.'**
+  String get resultDone;
+
+  /// No description provided for @resultGaveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'I couldn\'t finish this. It\'s back with you.'**
+  String get resultGaveUp;
+
+  /// No description provided for @resultBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'I stopped because of a safety rule.'**
+  String get resultBlocked;
+
+  /// No description provided for @resultRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rules don\'t allow this.'**
+  String get resultRefused;
+
+  /// No description provided for @resultDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} said no.'**
+  String resultDeclined(String person);
+
+  /// No description provided for @resultNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} didn\'t answer.'**
+  String resultNoAnswer(String person);
+
+  /// No description provided for @resultStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped.'**
+  String get resultStopped;
+
+  /// No description provided for @resultFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'That didn\'t work.'**
+  String get resultFailed;
+
+  /// No description provided for @liveStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {n}'**
+  String liveStep(int n);
+
+  /// No description provided for @liveStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get liveStarting;
+
+  /// No description provided for @octoToldHer.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo told her: {answer}'**
+  String octoToldHer(String answer);
+
+  /// No description provided for @replyingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to “{text}”'**
+  String replyingTo(String text);
+
+  /// No description provided for @fromName.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} → Octo'**
+  String fromName(String name);
+
+  /// No description provided for @stopOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer is offline.'**
+  String stopOffline(String person);
+
+  /// No description provided for @stopRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'That task already finished.'**
+  String get stopRefused;
+
+  /// No description provided for @stopNoReply.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer from her computer. It may still stop.'**
+  String get stopNoReply;
+
+  /// No description provided for @welcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi {helper}! I\'m {person}\'s Octo. Ask me to do something on her computer, like check the Wi-Fi or make the text bigger. I\'ll always ask her first before changing anything.'**
+  String welcome(String helper, String person);
+
+  /// No description provided for @bubbleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{sender}, {time}: {text}'**
+  String bubbleLabel(String sender, String time, String text);
+
+  /// No description provided for @octoName.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo'**
+  String get octoName;
+
+  /// No description provided for @youName.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get youName;
+
+  /// No description provided for @imageFromOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot from Octo'**
+  String get imageFromOcto;
+
+  /// No description provided for @imageFromHer.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot from {person}'**
+  String imageFromHer(String person);
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @timelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get timelineTitle;
+
+  /// No description provided for @timelineAsked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} asked'**
+  String timelineAsked(String name);
+
+  /// No description provided for @timelineStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get timelineStarted;
+
+  /// No description provided for @timelineEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get timelineEnded;
+
+  /// No description provided for @activityMayBeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Older activity may be missing'**
+  String get activityMayBeMissing;
+
+  /// No description provided for @scanCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'On the family computer, click the floating Octo, open Family, and choose Add a family member. Point your camera at the code.'**
+  String get scanCaption;
+
+  /// No description provided for @typeCodeInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the code instead'**
+  String get typeCodeInstead;
+
+  /// No description provided for @smallPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only add a family member\'s computer while you\'re with them, or on a call with them.'**
+  String get smallPrint;
+
+  /// No description provided for @useSimulator.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a simulated computer'**
+  String get useSimulator;
+
+  /// No description provided for @cameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera isn\'t available. You can type the code instead.'**
+  String get cameraUnavailable;
+
+  /// No description provided for @typeCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the code'**
+  String get typeCodeTitle;
+
+  /// No description provided for @typeCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'8 letters or numbers'**
+  String get typeCodeHint;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// No description provided for @codeNotRecognised.
+  ///
+  /// In en, this message translates to:
+  /// **'That isn\'t an Octo code. Check it and try again.'**
+  String get codeNotRecognised;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connecting;
+
+  /// No description provided for @compareKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{computer} shows the same key. Check they match, and ask them to tap OK.'**
+  String compareKeyBody(String computer);
+
+  /// No description provided for @theyMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'They match'**
+  String get theyMatch;
+
+  /// No description provided for @theyDontMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'They don\'t match'**
+  String get theyDontMatch;
+
+  /// No description provided for @mismatchExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'The keys didn\'t match, so we stopped. Someone else may be trying to add this computer.'**
+  String get mismatchExplain;
+
+  /// No description provided for @waitingForOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for someone to tap OK on {computer}…'**
+  String waitingForOk(String computer);
+
+  /// No description provided for @pairOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'{computer} went offline. Try again when it\'s back.'**
+  String pairOffline(String computer);
+
+  /// No description provided for @pairTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'No one answered on {computer}.'**
+  String pairTimedOut(String computer);
+
+  /// No description provided for @pairNotAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not added'**
+  String get pairNotAdded;
+
+  /// No description provided for @scanAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get scanAgain;
+
+  /// No description provided for @nameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is it for?'**
+  String get nameTitle;
+
+  /// No description provided for @nameOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Their name'**
+  String get nameOther;
+
+  /// No description provided for @languageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Their language'**
+  String get languageTitle;
+
+  /// No description provided for @computerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'The computer\'s name'**
+  String get computerNameLabel;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @lookTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick their Octo'**
+  String get lookTitle;
+
+  /// No description provided for @setupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t finish setting up. {message}'**
+  String setupFailed(String message);
+
+  /// No description provided for @notificationsWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'So you know when {person} needs you.'**
+  String notificationsWhy(String person);
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
