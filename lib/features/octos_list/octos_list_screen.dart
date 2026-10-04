@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/app_settings.dart';
 import '../../app/providers.dart';
 import '../../data/backend/octo_backend.dart';
+import '../../data/computer_settings.dart';
 import '../../data/db/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../transport/simulator/debug_panel.dart';
@@ -240,8 +241,16 @@ class _OctosListScreenState extends ConsumerState<OctosListScreen> {
     if (mounted) await context.push('/octo/${c.id}');
   }
 
-  Future<void> _setMuted(ComputerRow c, bool muted) =>
-      _db.updateComputer(c.id, ComputersCompanion(muted: Value(muted)));
+  Future<void> _setMuted(ComputerRow c, bool muted) async {
+    try {
+      await setComputerMuted(_db, ref.read(backendProvider), c.id, muted);
+    } on BackendException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
 
   Future<void> _setPinned(ComputerRow c, bool pinned) =>
       _db.updateComputer(c.id, ComputersCompanion(pinned: Value(pinned)));

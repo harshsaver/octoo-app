@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/account_scope.dart';
+import '../data/backend/http_backend.dart';
 import '../data/backend/octo_backend.dart';
 import '../data/db/database.dart';
 import '../data/enrollment/enrollment_repository.dart';
@@ -58,14 +59,27 @@ final octoLinkProvider = Provider<OctoLink>((ref) {
   throw UnimplementedError('RelayLink arrives in stage 5');
 });
 
+/// The signed-in person's October access token (stage 4 sign-in replaces
+/// this; fake mode has none).
+final accessTokenProvider = Provider<Future<String?> Function()>(
+  (ref) =>
+      () async => null,
+);
+
 final backendProvider = Provider<OctoBackend>((ref) {
-  if (ref.watch(appConfigProvider).isFake) return FakeBackend();
-  throw UnimplementedError('HttpBackend arrives in stage 4');
+  final config = ref.watch(appConfigProvider);
+  if (config.isFake) return FakeBackend();
+  final backend = HttpBackend(
+    baseUrl: config.apiBase,
+    accessToken: ref.watch(accessTokenProvider),
+  );
+  ref.onDispose(backend.close);
+  return backend;
 });
 
 final enrollmentProvider = Provider<EnrollmentRepository>((ref) {
   if (ref.watch(appConfigProvider).isFake) return FakeEnrollment();
-  throw UnimplementedError('HttpEnrollment arrives with its contract');
+  return LinkEnrollment();
 });
 
 /// This account's database. The folder is excluded from iOS backups before

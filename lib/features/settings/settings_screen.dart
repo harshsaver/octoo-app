@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/providers.dart';
+import '../../data/backend/octo_backend.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/theme.dart';
@@ -117,7 +118,16 @@ class SettingsScreen extends ConsumerWidget {
                 SwitchListTile(
                   title: Text(notifyLabel(k)),
                   value: settings.notifies(k),
-                  onChanged: (on) => controller.setNotify(k, on),
+                  onChanged: (on) async {
+                    try {
+                      await controller.setNotify(k, on);
+                    } on BackendException catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(e.message)));
+                      }
+                    }
+                  },
                 ),
             ],
           ),

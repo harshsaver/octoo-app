@@ -1,11 +1,12 @@
 import 'package:clock/clock.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/backend/octo_backend.dart';
+import '../../data/computer_settings.dart';
 import '../../data/db/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/grouped_list.dart';
@@ -184,7 +185,15 @@ class DetailsScreen extends ConsumerWidget {
                     title: Text(l.usageQuestions),
                     trailing: value('${u.questions}'),
                   ),
-                  ListTile(title: Text(l.usageCost), trailing: value(u.cost)),
+                  ListTile(
+                    title: Text(l.usageCost),
+                    trailing: value(
+                      NumberFormat.simpleCurrency(
+                        locale: l.localeName,
+                        name: u.currency,
+                      ).format(u.costAmount),
+                    ),
+                  ),
                 ],
                 loading: () => [
                   const ListTile(title: LinearProgressIndicator()),
@@ -198,12 +207,21 @@ class DetailsScreen extends ConsumerWidget {
               SwitchListTile(
                 title: Text(l.muteNotifications),
                 value: computer.muted,
-                onChanged: (on) => ref
-                    .read(databaseProvider)
-                    .updateComputer(
+                onChanged: (on) async {
+                  try {
+                    await setComputerMuted(
+                      ref.read(databaseProvider),
+                      ref.read(backendProvider),
                       computerId,
-                      ComputersCompanion(muted: Value(on)),
-                    ),
+                      on,
+                    );
+                  } on BackendException catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text(e.message)));
+                    }
+                  }
+                },
               ),
             ],
           ),
