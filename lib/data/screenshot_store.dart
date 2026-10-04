@@ -121,6 +121,23 @@ class ScreenshotStore {
     }
   }
 
+  /// Deletes the files for [ids] (a computer that was removed).
+  Future<void> delete(Iterable<String> ids) async {
+    final wanted = ids.toSet();
+    if (wanted.isEmpty) return;
+    await flush();
+    if (await directory.exists()) {
+      await for (final f in directory.list()) {
+        if (f is File && wanted.contains(p.basename(f.path).split('.').first)) {
+          await _delete(f);
+        }
+      }
+    }
+    for (final id in wanted) {
+      _forget(id);
+    }
+  }
+
   /// Deletes every file (account sign-out or reset).
   Future<void> clear() async {
     _index.clear();

@@ -7,6 +7,8 @@ import '../features/not_configured/not_configured_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/theme.dart';
 import '../data/account_scope.dart';
+import '../features/lock/app_lock.dart';
+import 'app_settings.dart';
 import 'config.dart';
 import 'providers.dart';
 import 'router.dart';
@@ -68,10 +70,13 @@ class _OctoAppState extends ConsumerState<OctoApp> {
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: octoLightTheme(),
       darkTheme: octoDarkTheme(),
+      themeMode: ref.watch(appSettingsProvider.select((s) => s.themeMode)),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) =>
+          AppLockGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

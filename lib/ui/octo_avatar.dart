@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'octo_looks.dart';
@@ -26,6 +28,7 @@ class OctoAvatar extends StatefulWidget {
     this.size = OctoSpace.avatarSize,
     this.mood = OctoMood.idle,
     this.semanticLabel,
+    this.celebrateKey,
   });
 
   final OctoLook look;
@@ -33,15 +36,22 @@ class OctoAvatar extends StatefulWidget {
   final OctoMood mood;
   final String? semanticLabel;
 
+  /// When this changes to a new non-null value, the Octo gives a quick
+  /// wiggle (a task finished).
+  final String? celebrateKey;
+
   static const asset = 'assets/octo/octo.png';
 
   @override
   State<OctoAvatar> createState() => _OctoAvatarState();
 }
 
-class _OctoAvatarState extends State<OctoAvatar>
-    with SingleTickerProviderStateMixin {
+class _OctoAvatarState extends State<OctoAvatar> with TickerProviderStateMixin {
   AnimationController? _motion;
+  late final AnimationController _wiggle = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
 
   bool get _animates =>
       widget.mood == OctoMood.working || widget.mood == OctoMood.waiting;
@@ -56,6 +66,14 @@ class _OctoAvatarState extends State<OctoAvatar>
   void didUpdateWidget(OctoAvatar old) {
     super.didUpdateWidget(old);
     _syncMotion();
+    final key = widget.celebrateKey;
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (key != null &&
+        old.celebrateKey != null &&
+        key != old.celebrateKey &&
+        !reduce) {
+      _wiggle.forward(from: 0);
+    }
   }
 
   void _syncMotion() {
@@ -75,6 +93,7 @@ class _OctoAvatarState extends State<OctoAvatar>
 
   @override
   void dispose() {
+    _wiggle.dispose();
     _motion?.dispose();
     super.dispose();
   }
@@ -126,6 +145,18 @@ class _OctoAvatarState extends State<OctoAvatar>
         child: octo,
       );
     }
+
+    octo = AnimatedBuilder(
+      animation: _wiggle,
+      builder: (context, child) {
+        final t = _wiggle.value;
+        if (t == 0 || t == 1) return child!;
+        // A few quick turns that die away.
+        final angle = 0.18 * (1 - t) * math.sin(t * math.pi * 6);
+        return Transform.rotate(angle: angle, child: child);
+      },
+      child: octo,
+    );
 
     Widget circle = Container(
       width: size,

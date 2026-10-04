@@ -14,24 +14,13 @@ import '../../data/enrollment/enrollment_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../transport/octo_link.dart';
 import '../../ui/octo_avatar.dart';
+import '../../ui/languages.dart';
+import '../../ui/look_picker.dart';
 import '../../ui/octo_looks.dart';
 import '../../ui/theme.dart';
 import '../../ui/tokens.dart';
 
 const _nameChips = ['Mom', 'Dad', 'Nani', 'Dadi', 'Grandma', 'Grandpa'];
-
-const _languages = [
-  ('en', 'English'),
-  ('hi', 'हिन्दी'),
-  ('es', 'Español'),
-  ('fr', 'Français'),
-  ('de', 'Deutsch'),
-  ('pt', 'Português'),
-  ('bn', 'বাংলা'),
-  ('ur', 'اردو'),
-  ('ta', 'தமிழ்'),
-  ('zh', '中文'),
-];
 
 /// The sheet after a code is read: pairing (scanned → compare key → waiting
 /// for her → outcome), then "Who is it for?", then "Pick their Octo".
@@ -141,6 +130,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
           role: Value(widget.enrollment.mode.name),
           sortOrder: Value(count),
           lastReadAt: Value(now),
+          profileGen: const Value(1),
           addedAt: now,
         ),
       );
@@ -148,37 +138,15 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
           .read(sessionsControllerProvider)
           .ensure(paired.computerId, bind: paired.hostId);
       await session.addNote('welcome', l.welcome(helper, person));
-      // Her computer learns the names once it's connected (best effort; the
-      // full profile sync loop comes with Details).
-      unawaited(
-        _sendProfileWhenConnected(session.computerId, person, computerName),
-      );
+      // Her computer learns the names through the profile sync: it is owed
+      // (generation 1) and runs now or when she's back.
+      unawaited(ref.read(profileSyncProvider).sync(session.computerId));
       if (mounted) Navigator.pop(context, paired.computerId);
     } on BackendException catch (e) {
       setState(() {
         _step = _Step.look;
         _error = l.setupFailed(e.message);
       });
-    }
-  }
-
-  Future<void> _sendProfileWhenConnected(
-    String computerId,
-    String person,
-    String computerName,
-  ) async {
-    final controller = ref.read(sessionsControllerProvider);
-    for (var i = 0; i < 20; i++) {
-      final session = controller.session(computerId);
-      if (session != null && session.isConnected) {
-        await session.sendProfile(
-          person: person,
-          computer: computerName,
-          language: _language,
-        );
-        return;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 500));
     }
   }
 
@@ -320,7 +288,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
         spacing: OctoSpace.sm,
         runSpacing: OctoSpace.sm,
         children: [
-          for (final (code, name) in _languages)
+          for (final (code, name) in octoLanguages)
             ChoiceChip(
               label: Text(name),
               selected: _language == code,
@@ -353,39 +321,9 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
       const SizedBox(height: OctoSpace.lg),
       Center(child: OctoAvatar(look: _look, size: 120)),
       const SizedBox(height: OctoSpace.lg),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final look in OctoLook.values)
-              Padding(
-                padding: const EdgeInsets.only(right: OctoSpace.sm),
-                child: Semantics(
-                  button: true,
-                  selected: look == _look,
-                  label: look.label,
-                  excludeSemantics: true,
-                  child: InkResponse(
-                    onTap: saving ? null : () => setState(() => _look = look),
-                    radius: 32,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: look == _look
-                              ? colors.accent
-                              : Colors.transparent,
-                          width: 3,
-                        ),
-                      ),
-                      child: OctoAvatar(look: look, size: 52),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+      LookPicker(
+        selected: _look,
+        onChanged: saving ? null : (look) => setState(() => _look = look),
       ),
       if (_error != null) ...[
         const SizedBox(height: OctoSpace.md),

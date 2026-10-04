@@ -38,6 +38,7 @@ class OctoRowModel {
     required this.unread,
     this.latestAt,
     this.latestIncomingAt,
+    this.celebrateKey,
   });
 
   final ComputerRow computer;
@@ -51,6 +52,9 @@ class OctoRowModel {
 
   /// The newest thing not from this phone (unread state).
   final int? latestIncomingAt;
+
+  /// Changes when a task finishes done (the avatar wiggles).
+  final String? celebrateKey;
 
   bool get needsHand => kind == PreviewKind.needsHand;
 }
@@ -124,7 +128,20 @@ OctoRowModel buildRowModel({
     unread: incoming != null && incoming > computer.lastReadAt,
     latestAt: latest?.at ?? helpAt,
     latestIncomingAt: incoming,
+    celebrateKey: lastDoneKey(data),
   );
+}
+
+/// An id for the most recent task that finished done; a new one means
+/// "wiggle". Null when none has.
+String? lastDoneKey(SessionData? data) {
+  Task? last;
+  for (final t in data?.tasks.values ?? const <TrackedTask>[]) {
+    final task = t.task;
+    if (task.phase != TaskPhase.done) continue;
+    if (last == null || (task.endedAt ?? 0) > (last.endedAt ?? 0)) last = task;
+  }
+  return last == null ? 'none' : last.id;
 }
 
 String _latestText(AppLocalizations l, ThreadItem item, String person) =>

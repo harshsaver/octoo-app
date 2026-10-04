@@ -1161,6 +1161,456 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'So you know when {person} needs you.'**
   String notificationsWhy(String person);
+
+  /// No description provided for @detailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get detailsTitle;
+
+  /// No description provided for @changeOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Octo'**
+  String get changeOcto;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameLabel;
+
+  /// No description provided for @languageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageLabel;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @syncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer will update when it\'s back.'**
+  String syncPending(String person);
+
+  /// No description provided for @rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get rules;
+
+  /// No description provided for @activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activity;
+
+  /// No description provided for @helpers.
+  ///
+  /// In en, this message translates to:
+  /// **'Helpers'**
+  String get helpers;
+
+  /// No description provided for @thisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get thisMonth;
+
+  /// No description provided for @usageTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get usageTasks;
+
+  /// No description provided for @usageQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get usageQuestions;
+
+  /// No description provided for @usageCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get usageCost;
+
+  /// No description provided for @usageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this month.'**
+  String get usageUnavailable;
+
+  /// No description provided for @muteNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute notifications'**
+  String get muteNotifications;
+
+  /// No description provided for @removeOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this Octo'**
+  String get removeOcto;
+
+  /// No description provided for @removeForEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove for everyone'**
+  String get removeForEveryone;
+
+  /// No description provided for @removeFromPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from my phone'**
+  String get removeFromPhone;
+
+  /// No description provided for @youSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (you)'**
+  String youSuffix(String name);
+
+  /// No description provided for @helpersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Helpers show up once her computer is reachable.'**
+  String get helpersEmpty;
+
+  /// No description provided for @rulesAskEveryChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask before every change'**
+  String get rulesAskEveryChange;
+
+  /// No description provided for @rulesAskBeforeLooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask before looking at the screen'**
+  String get rulesAskBeforeLooking;
+
+  /// No description provided for @rulesNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never…'**
+  String get rulesNever;
+
+  /// No description provided for @rulesSites.
+  ///
+  /// In en, this message translates to:
+  /// **'Sites to stay off'**
+  String get rulesSites;
+
+  /// No description provided for @addSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a site'**
+  String get addSite;
+
+  /// No description provided for @siteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'example.com'**
+  String get siteHint;
+
+  /// No description provided for @invalidSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a site like example.com'**
+  String get invalidSite;
+
+  /// No description provided for @ruleApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying change'**
+  String get ruleApplying;
+
+  /// No description provided for @ruleWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {person} to approve'**
+  String ruleWaiting(String person);
+
+  /// No description provided for @ruleKeptOld.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} kept the old rule'**
+  String ruleKeptOld(String person);
+
+  /// No description provided for @rulesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'{person}\'s computer is offline. Rules can change when it\'s back.'**
+  String rulesOffline(String person);
+
+  /// No description provided for @ruleNoReply.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer from her computer. Nothing changed.'**
+  String get ruleNoReply;
+
+  /// No description provided for @ruleRefusedPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Her computer didn\'t take that change.'**
+  String get ruleRefusedPlain;
+
+  /// No description provided for @rulesLooserNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Making a rule looser waits for {person} to approve it.'**
+  String rulesLooserNote(String person);
+
+  /// No description provided for @removeSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {site}'**
+  String removeSite(String site);
+
+  /// No description provided for @activityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet.'**
+  String get activityEmpty;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @kindTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get kindTask;
+
+  /// No description provided for @kindStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get kindStep;
+
+  /// No description provided for @kindConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'OKs'**
+  String get kindConsent;
+
+  /// No description provided for @kindLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety stops'**
+  String get kindLimit;
+
+  /// No description provided for @kindTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'To-dos'**
+  String get kindTodo;
+
+  /// No description provided for @kindHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get kindHelp;
+
+  /// No description provided for @kindScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen'**
+  String get kindScreen;
+
+  /// No description provided for @kindMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get kindMessage;
+
+  /// No description provided for @kindPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'Helpers'**
+  String get kindPairing;
+
+  /// No description provided for @kindPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get kindPolicy;
+
+  /// No description provided for @kindOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get kindOther;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @accountFake.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulated account. This copy plays the family computers itself.'**
+  String get accountFake;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @appLock.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock'**
+  String get appLock;
+
+  /// No description provided for @appLockDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for Face ID, fingerprint or your passcode after a minute away.'**
+  String get appLockDetail;
+
+  /// No description provided for @appLockUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone has no screen lock set up.'**
+  String get appLockUnavailable;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @notifyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone needs a hand'**
+  String get notifyHelp;
+
+  /// No description provided for @notifyTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Something is sent to you'**
+  String get notifyTodo;
+
+  /// No description provided for @notifyConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo is waiting for an OK'**
+  String get notifyConsent;
+
+  /// No description provided for @notifyTaskEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'A task finishes'**
+  String get notifyTaskEnded;
+
+  /// No description provided for @notifyPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'A helper is added'**
+  String get notifyPairing;
+
+  /// No description provided for @notificationsLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications arrive once you\'re signed in with October.'**
+  String get notificationsLater;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @versionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String versionLabel(String version);
+
+  /// No description provided for @aboutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo by October. Tasks, to-dos and screenshots travel end to end encrypted. Screenshots stay on this phone for 7 days.'**
+  String get aboutBody;
+
+  /// No description provided for @developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get developer;
+
+  /// No description provided for @showSimulator.
+  ///
+  /// In en, this message translates to:
+  /// **'Show simulator controls'**
+  String get showSimulator;
+
+  /// No description provided for @lockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Octo is locked'**
+  String get lockTitle;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// No description provided for @unlockReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Octo'**
+  String get unlockReason;
 }
 
 class _AppLocalizationsDelegate

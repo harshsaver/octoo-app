@@ -531,5 +531,136 @@
         "type": "String"
       }
     }
-  }
+  },
+  "detailsTitle": "Details",
+  "changeOcto": "Change Octo",
+  "rename": "Rename",
+  "nameLabel": "Name",
+  "languageLabel": "Language",
+  "save": "Save",
+  "syncPending": "{person}'s computer will update when it's back.",
+  "@syncPending": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "rules": "Rules",
+  "activity": "Activity",
+  "helpers": "Helpers",
+  "thisMonth": "This month",
+  "usageTasks": "Tasks",
+  "usageQuestions": "Questions",
+  "usageCost": "Cost",
+  "usageUnavailable": "Couldn't load this month.",
+  "muteNotifications": "Mute notifications",
+  "removeOcto": "Remove this Octo",
+  "removeForEveryone": "Remove for everyone",
+  "removeFromPhone": "Remove from my phone",
+  "youSuffix": "{name} (you)",
+  "@youSuffix": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "helpersEmpty": "Helpers show up once her computer is reachable.",
+  "rulesAskEveryChange": "Ask before every change",
+  "rulesAskBeforeLooking": "Ask before looking at the screen",
+  "rulesNever": "Never…",
+  "rulesSites": "Sites to stay off",
+  "addSite": "Add a site",
+  "siteHint": "example.com",
+  "invalidSite": "Type a site like example.com",
+  "ruleApplying": "Applying change",
+  "ruleWaiting": "Waiting for {person} to approve",
+  "@ruleWaiting": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleKeptOld": "{person} kept the old rule",
+  "@ruleKeptOld": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "rulesOffline": "{person}'s computer is offline. Rules can change when it's back.",
+  "@rulesOffline": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleNoReply": "No answer from her computer. Nothing changed.",
+  "ruleRefusedPlain": "Her computer didn't take that change.",
+  "rulesLooserNote": "Making a rule looser waits for {person} to approve it.",
+  "@rulesLooserNote": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "removeSite": "Remove {site}",
+  "@removeSite": {
+    "placeholders": {
+      "site": {
+        "type": "String"
+      }
+    }
+  },
+  "activityEmpty": "Nothing here yet.",
+  "filterAll": "All",
+  "today": "Today",
+  "kindTask": "Tasks",
+  "kindStep": "Steps",
+  "kindConsent": "OKs",
+  "kindLimit": "Safety stops",
+  "kindTodo": "To-dos",
+  "kindHelp": "Help",
+  "kindScreen": "Screen",
+  "kindMessage": "Messages",
+  "kindPairing": "Helpers",
+  "kindPolicy": "Rules",
+  "kindOther": "Other",
+  "settingsTitle": "Settings",
+  "account": "Account",
+  "accountFake": "Simulated account. This copy plays the family computers itself.",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "appLock": "App lock",
+  "appLockDetail": "Ask for Face ID, fingerprint or your passcode after a minute away.",
+  "appLockUnavailable": "This phone has no screen lock set up.",
+  "notifications": "Notifications",
+  "notifyHelp": "Someone needs a hand",
+  "notifyTodo": "Something is sent to you",
+  "notifyConsent": "Octo is waiting for an OK",
+  "notifyTaskEnded": "A task finishes",
+  "notifyPairing": "A helper is added",
+  "notificationsLater": "Notifications arrive once you're signed in with October.",
+  "about": "About",
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutBody": "Octo by October. Tasks, to-dos and screenshots travel end to end encrypted. Screenshots stay on this phone for 7 days.",
+  "developer": "Developer",
+  "showSimulator": "Show simulator controls",
+  "lockTitle": "Octo is locked",
+  "unlock": "Unlock",
+  "unlockReason": "Unlock Octo"
 }

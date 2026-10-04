@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/app_settings.dart';
 import '../../app/providers.dart';
 import '../../data/backend/octo_backend.dart';
 import '../../data/db/database.dart';
@@ -102,15 +103,33 @@ class _OctosListScreenState extends ConsumerState<OctosListScreen> {
             SliverAppBar.large(
               title: Text(l.octosTitle),
               centerTitle: false,
-              leadingWidth: 88,
-              leading: (rows?.isEmpty ?? true)
-                  ? null
-                  : TextButton(
+              leadingWidth: 148,
+              // Settings from a small avatar at the top left, then Edit.
+              leading: Row(
+                children: [
+                  const SizedBox(width: OctoSpace.xs),
+                  IconButton(
+                    tooltip: l.settings,
+                    onPressed: () => context.push('/settings'),
+                    icon: CircleAvatar(
+                      radius: 15,
+                      backgroundColor: colors.accentText,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      child: Text(
+                        ref.watch(accountProvider).name.characters.first,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  if (!(rows?.isEmpty ?? true))
+                    TextButton(
                       onPressed: () => setState(() => _editing = !_editing),
                       child: Text(_editing ? l.done : l.edit),
                     ),
+                ],
+              ),
               actions: [
-                if (isFake)
+                if (isFake && ref.watch(appSettingsProvider).showSimulator)
                   IconButton(
                     tooltip: l.playMom,
                     icon: const Icon(Icons.bug_report_outlined),
@@ -482,6 +501,7 @@ class _RowTile extends StatelessWidget {
                     look: OctoLook.fromId(c.look),
                     size: 52,
                     mood: row.mood,
+                    celebrateKey: row.celebrateKey,
                   ),
                   const SizedBox(width: OctoSpace.md),
                   Expanded(

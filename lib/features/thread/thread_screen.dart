@@ -2,6 +2,8 @@ import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../app/providers.dart';
 import '../../data/session/computer_session.dart';
 import '../../data/thread/projection.dart';
@@ -13,6 +15,7 @@ import '../../ui/octo_looks.dart';
 import '../../ui/theme.dart';
 import '../../ui/time_format.dart';
 import '../../ui/tokens.dart';
+import '../octos_list/list_model.dart' show lastDoneKey;
 import 'composer.dart';
 import 'task_details_sheet.dart';
 import 'thread_bubbles.dart';
@@ -131,34 +134,45 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
         toolbarHeight: 64,
         title: Semantics(
           header: true,
+          button: true,
           label: '$person. $status',
+          onTapHint: l.detailsTitle,
           excludeSemantics: true,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              OctoAvatar(
-                look: OctoLook.fromId(computer.look),
-                size: 36,
-                mood: mood,
-              ),
-              const SizedBox(width: OctoSpace.sm),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(person, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(
-                      status,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: statusColor),
-                    ),
-                  ],
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/octo/$id/details'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OctoAvatar(
+                  look: OctoLook.fromId(computer.look),
+                  celebrateKey: lastDoneKey(data),
+                  size: 36,
+                  mood: mood,
                 ),
-              ),
-            ],
+                const SizedBox(width: OctoSpace.sm),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        person,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        status,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: statusColor),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -189,11 +203,6 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                     },
                   ),
           ),
-          if (data?.logMayBeIncomplete ?? false)
-            Text(
-              l.activityMayBeMissing,
-              style: TextStyle(color: colors.secondaryLabel, fontSize: 12),
-            ),
           Composer(
             controller: _composer,
             person: person,

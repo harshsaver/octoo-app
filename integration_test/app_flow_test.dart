@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:octo_family/app/app.dart';
+import 'package:octo_family/app/app_settings.dart';
 import 'package:octo_family/app/config.dart';
 import 'package:octo_family/app/providers.dart';
 import 'package:octo_family/data/account_scope.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// On a device or emulator, against the simulator (PLAN §5): pair → task →
 /// her OK → steps → result, with the real database and screenshot store.
@@ -38,7 +40,12 @@ void main() {
           support: Directory('${root.path}/support'),
           cache: Directory('${root.path}/cache'),
         ),
-        overrides: [cameraAvailableProvider.overrideWithValue(false)],
+        overrides: [
+          cameraAvailableProvider.overrideWithValue(false),
+          sharedPreferencesProvider.overrideWithValue(
+            await SharedPreferences.getInstance(),
+          ),
+        ],
       ),
     );
 

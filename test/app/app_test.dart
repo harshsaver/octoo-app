@@ -4,11 +4,13 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octo_family/app/app.dart';
+import 'package:octo_family/app/app_settings.dart';
 import 'package:octo_family/app/config.dart';
 import 'package:octo_family/app/providers.dart';
 import 'package:octo_family/data/account_scope.dart';
 import 'package:octo_family/data/db/database.dart';
 import 'package:octo_family/data/screenshot_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// No file I/O in widget tests (it never completes under fake time).
 class _QuietShots extends ScreenshotStore {
@@ -23,6 +25,8 @@ final _dirs = AccountDirs(
   cache: Directory('/nonexistent/c'),
 );
 
+late SharedPreferences _prefs;
+
 Widget _app() => buildApp(
   ConfigOk(AppConfig.fake),
   dirs: _dirs,
@@ -34,6 +38,7 @@ Widget _app() => buildApp(
     }),
     screenshotStoreProvider.overrideWith((ref) => _QuietShots()),
     cameraAvailableProvider.overrideWithValue(false),
+    sharedPreferencesProvider.overrideWithValue(_prefs),
   ],
 );
 
@@ -62,6 +67,11 @@ Future<void> _checkAccessibility(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   testWidgets('a missing config shows "This build isn\'t configured"', (
     tester,
   ) async {
@@ -190,6 +200,123 @@ void main() {
     expect(find.text('Mom'), findsOneWidget);
     expect(find.text("Joined. She's in the call."), findsOneWidget);
 
+    await _tearDown(tester);
+  });
+
+  stage3Tests();
+}
+
+/// Adds a simulated computer through the UI and lands in its thread.
+Future<void> _addOcto(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Add an Octo').first);
+  await _pump(tester);
+  await tester.tap(find.text('Use a simulated computer'));
+  await _pump(tester);
+  await tester.tap(find.text('They match'));
+  await _pump(tester, const Duration(seconds: 4));
+  await tester.ensureVisible(find.text('Next'));
+  await tester.tap(find.text('Next'));
+  await _pump(tester);
+  await tester.ensureVisible(find.text('Done'));
+  await tester.tap(find.text('Done'));
+  await _pump(tester, const Duration(seconds: 2));
+}
+
+void stage3Tests() {
+  testWidgets('Details: rename, rules, activity', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(_app());
+    await _pump(tester);
+    await _addOcto(tester);
+
+    // The header opens Details.
+    await tester.tap(find.text('Mom').first);
+    await _pump(tester);
+    expect(find.text('Details'), findsOneWidget);
+    expect(find.text('Change Octo'), findsOneWidget);
+    expect(find.text('Harsh (you)'), findsOneWidget);
+    expect(find.text('Tasks'), findsOneWidget, reason: 'this month');
+
+    // Rename her: PATCH, then her computer is updated.
+    await tester.tap(find.text('Name'));
+    await _pump(tester);
+    await tester.enterText(find.byType(TextField), 'Ma');
+    await tester.tap(find.text('Save'));
+    await _pump(tester, const Duration(seconds: 2));
+    expect(find.text('Ma'), findsWidgets);
+    expect(
+      find.text("Ma's computer will update when it's back."),
+      findsNothing,
+      reason: 'online: synced at once',
+    );
+
+    // Rules: a tightening change is applied by her computer.
+    await tester.tap(find.text('Rules'));
+    await _pump(tester);
+    final looking = find.widgetWithText(
+      SwitchListTile,
+      'Ask before looking at the screen',
+    );
+    expect(tester.widget<SwitchListTile>(looking).value, isFalse);
+    await tester.tap(looking);
+    await tester.pump();
+    expect(find.text('Applying change'), findsOneWidget);
+    await _pump(tester, const Duration(seconds: 2));
+    expect(find.text('Applying change'), findsNothing);
+    expect(tester.widget<SwitchListTile>(looking).value, isTrue);
+
+    // Loosening waits for her.
+    final installs = find.widgetWithText(SwitchListTile, 'Install apps');
+    await tester.ensureVisible(installs);
+    await tester.tap(installs);
+    await _pump(tester, const Duration(seconds: 1));
+    expect(tester.widget<SwitchListTile>(installs).value, isTrue);
+    await tester.tap(installs);
+    await tester.pump();
+    expect(find.text('Waiting for Ma to approve'), findsOneWidget);
+    await _pump(tester, const Duration(seconds: 4)); // autopilot: she says OK
+    expect(find.text('Waiting for Ma to approve'), findsNothing);
+    expect(tester.widget<SwitchListTile>(installs).value, isFalse);
+
+    // Activity lists what happened, by day.
+    await tester.pageBack();
+    await _pump(tester);
+    await tester.tap(find.text('Activity'));
+    await _pump(tester, const Duration(seconds: 1));
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('All'), findsOneWidget);
+
+    await _tearDown(tester);
+  });
+
+  testWidgets('Settings: appearance and the developer toggle', (tester) async {
+    await tester.pumpWidget(_app());
+    await _pump(tester);
+    expect(find.byTooltip('Play Mom (simulator)'), findsNothing);
+    await tester.tap(find.byTooltip('Settings'));
+    await _pump(tester);
+    expect(
+      find.text(
+        'Simulated account. This copy plays the family computers itself.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Dark'));
+    await _pump(tester);
+    expect(
+      Theme.of(tester.element(find.text('Settings').first)).brightness,
+      Brightness.dark,
+    );
+    final dev = find.widgetWithText(SwitchListTile, 'Show simulator controls');
+    await tester.scrollUntilVisible(dev, 200);
+    await tester.tap(dev);
+    await _pump(tester);
+    await tester.pageBack();
+    await _pump(tester);
+    expect(find.byTooltip('Play Mom (simulator)'), findsOneWidget);
+    await _checkAccessibility(tester);
     await _tearDown(tester);
   });
 }

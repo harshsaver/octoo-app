@@ -5,6 +5,7 @@ import '../../protocol/models/task.dart';
 import '../../protocol/models/todo.dart';
 import '../../transport/octo_link.dart';
 import '../outbox.dart';
+import '../policy_edit.dart';
 
 /// Where a screenshot is, from this phone's point of view. Screenshot bytes
 /// never live in session state or the database; they're normalised to one of
@@ -178,6 +179,7 @@ class SessionData {
     this.policy,
     this.policyLiveSeq = 0,
     this.policyDeclinedAt,
+    this.policyEdit,
     this.status,
     this.myHelperId,
     this.removed = false,
@@ -213,7 +215,12 @@ class SessionData {
   /// The rules her computer last reported.
   final Policy? policy;
   final int policyLiveSeq;
+
+  /// When she last kept the old rule (`policy{declined:true}`).
   final int? policyDeclinedAt;
+
+  /// The rules edit in flight, if any (one per computer).
+  final PolicyEdit? policyEdit;
 
   /// The last `status` snapshot (jobs, helpers, busy…).
   final ComputerStatus? status;
@@ -247,7 +254,8 @@ class SessionData {
     Map<String, LocalNote>? notes,
     Policy? policy,
     int? policyLiveSeq,
-    int? policyDeclinedAt,
+    int? Function()? policyDeclinedAt,
+    PolicyEdit? Function()? policyEdit,
     ComputerStatus? status,
     String? myHelperId,
     bool? removed,
@@ -271,7 +279,10 @@ class SessionData {
     notes: notes ?? this.notes,
     policy: policy ?? this.policy,
     policyLiveSeq: policyLiveSeq ?? this.policyLiveSeq,
-    policyDeclinedAt: policyDeclinedAt ?? this.policyDeclinedAt,
+    policyDeclinedAt: policyDeclinedAt == null
+        ? this.policyDeclinedAt
+        : policyDeclinedAt(),
+    policyEdit: policyEdit == null ? this.policyEdit : policyEdit(),
     status: status ?? this.status,
     myHelperId: myHelperId ?? this.myHelperId,
     removed: removed ?? this.removed,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +11,7 @@ import '../data/account_scope.dart';
 import '../data/backend/octo_backend.dart';
 import '../data/db/database.dart';
 import '../data/enrollment/enrollment_repository.dart';
+import '../data/profile_sync.dart';
 import '../data/screenshot_store.dart';
 import '../data/session/computer_session.dart';
 import '../data/session/session_data.dart';
@@ -83,7 +85,18 @@ final databaseProvider = Provider<OctoDatabase>((ref) {
 
 final screenshotStoreProvider = Provider<ScreenshotStore>((ref) {
   final store = ScreenshotStore(ref.watch(accountDirsProvider).screenshots);
-  ref.onDispose(store.dispose);
+  // An expired or deleted screenshot also leaves the decoded-image cache.
+  final evictions = store.changes.listen((id) {
+    if (store.status(id) == ShotStatus.missing) {
+      PaintingBinding.instance.imageCache
+        ..clear()
+        ..clearLiveImages();
+    }
+  });
+  ref.onDispose(() {
+    unawaited(evictions.cancel());
+    unawaited(store.dispose());
+  });
   return store;
 });
 
@@ -106,13 +119,35 @@ final sessionsControllerProvider = Provider<SessionsController>((ref) {
 });
 
 /// Starts the sessions once (watched by the app root).
-final sessionsStartupProvider = FutureProvider<void>(
-  (ref) => ref.watch(sessionsControllerProvider).start(),
-);
+final sessionsStartupProvider = FutureProvider<void>((ref) async {
+  ref.watch(profileSyncProvider);
+  await ref.watch(sessionsControllerProvider).start();
+});
 
-/// The computers on this phone.
+/// Keeps her computer's copy of the profile in step (PLAN §3.5); runs on
+/// every connect.
+final profileSyncProvider = Provider<ProfileSync>((ref) {
+  final sessions = ref.watch(sessionsControllerProvider);
+  final sync = ProfileSync(
+    db: ref.watch(databaseProvider),
+    backend: ref.watch(backendProvider),
+    sessionFor: sessions.session,
+  );
+  sessions.addConnectedListener((id) => unawaited(sync.sync(id)));
+  return sync;
+});
+
+/// The computers on this phone (not those being removed).
 final computersProvider = StreamProvider<List<ComputerRow>>(
-  (ref) => ref.watch(databaseProvider).watchComputers(),
+  (ref) => ref
+      .watch(databaseProvider)
+      .watchComputers()
+      .map(
+        (rows) => [
+          for (final r in rows)
+            if (!r.tombstone) r,
+        ],
+      ),
 );
 
 final computerProvider = Provider.family<ComputerRow?, String>((ref, id) {

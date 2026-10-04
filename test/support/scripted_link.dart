@@ -19,6 +19,29 @@ class ScriptedLink implements OctoLink {
   /// When set, `send` throws this.
   Object? sendError;
 
+  /// When set, `unpair` throws this.
+  Object? unpairError;
+  final unpaired = <String>[];
+
+  /// Answers `status`, `todos` and `log` at once, and `profile.set` with
+  /// [profileOk] (null: never answers).
+  void answerRequests({bool? profileOk = true}) {
+    onSend = (m) {
+      final type = m['type'];
+      final id = m['requestId'];
+      switch (type) {
+        case 'status':
+          push({'type': 'status', 'requestId': id});
+        case 'todos':
+          push({'type': 'todos', 'requestId': id, 'todos': <Object>[]});
+        case 'log':
+          push({'type': 'log', 'requestId': id, 'entries': <Object>[]});
+        case 'profile.set' when profileOk != null:
+          push({'type': 'result', 'requestId': id, 'ok': profileOk});
+      }
+    };
+  }
+
   void goOnline() {
     connected = true;
     _states?.add(LinkState.connected);
@@ -65,5 +88,8 @@ class ScriptedLink implements OctoLink {
   }) => const Stream.empty();
 
   @override
-  Future<void> unpair(String computerId) async {}
+  Future<void> unpair(String computerId) async {
+    if (unpairError != null) throw unpairError!;
+    unpaired.add(computerId);
+  }
 }

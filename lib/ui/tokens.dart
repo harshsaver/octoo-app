@@ -19,6 +19,7 @@ class OctoColors {
     required this.helpTint,
     required this.separator,
     required this.tellBubble,
+    required this.secondaryOnBubble,
   });
 
   /// Octo orange `#D2601A`: the +, the send button, icons.
@@ -41,6 +42,7 @@ class OctoColors {
     helpTint: Color(0xFFFDECEC),
     separator: Color(0xFFE5E5EA),
     tellBubble: Color(0xFF33658A),
+    secondaryOnBubble: Color(0xFF545458),
   );
 
   static const dark = OctoColors(
@@ -59,6 +61,7 @@ class OctoColors {
     helpTint: Color(0xFF3A1D1D),
     separator: Color(0xFF38383A),
     tellBubble: Color(0xFF3B6E94),
+    secondaryOnBubble: Color(0xFFAEAEB2),
   );
 
   final Color background;
@@ -83,6 +86,9 @@ class OctoColors {
 
   /// Your messages to her (Tell Mom), so they never look like tasks.
   final Color tellBubble;
+
+  /// Smaller grey text inside a grey bubble (AA on [otherBubble]).
+  final Color secondaryOnBubble;
 }
 
 /// Spacing, radii and motion.

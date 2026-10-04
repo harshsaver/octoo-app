@@ -7,6 +7,7 @@ import '../../protocol/models/todo.dart';
 import '../../transport/octo_link.dart';
 import '../ids.dart';
 import '../outbox.dart';
+import '../policy_edit.dart';
 import 'session_data.dart';
 
 /// Something that changes a session. Host messages arrive with their
@@ -125,6 +126,18 @@ final class NoteAdded extends SessionEvent {
   final String text;
 }
 
+/// A rules edit was sent; [edit] says what's pending.
+final class PolicyEditStarted extends SessionEvent {
+  const PolicyEditStarted(this.edit);
+
+  final PolicyEdit edit;
+}
+
+/// The rules edit failed or was abandoned; pending labels go away.
+final class PolicyEditEnded extends SessionEvent {
+  const PolicyEditEnded();
+}
+
 /// Someone on this phone acted, so her help request is being handled.
 final class HelpHandled extends SessionEvent {
   const HelpHandled();
@@ -238,12 +251,20 @@ SessionData reduce(SessionData s, SessionEvent event) {
 
     case PolicyReceived(:final policy, :final declined, :final at):
       final seq = s.seq + 1;
+      final edit = s.policyEdit;
       return s.copyWith(
         seq: seq,
         policy: policy,
         policyLiveSeq: seq,
-        policyDeclinedAt: declined ? at : null,
+        policyDeclinedAt: () => declined ? at : null,
+        policyEdit: () => edit?.after(policy, declined: declined),
       );
+
+    case PolicyEditStarted(:final edit):
+      return s.copyWith(policyEdit: () => edit);
+
+    case PolicyEditEnded():
+      return s.copyWith(policyEdit: () => null);
 
     case RemovedReceived():
       return s.copyWith(seq: s.seq + 1, removed: true);
@@ -284,7 +305,11 @@ SessionData reduce(SessionData s, SessionEvent event) {
         if (help != null) next = _addHelp(next, help.since, help.text);
       }
       if (next.policyLiveSeq <= since && status.policy != null) {
-        next = next.copyWith(policy: status.policy);
+        final edit = next.policyEdit;
+        next = next.copyWith(
+          policy: status.policy,
+          policyEdit: () => edit?.after(status.policy!, declined: false),
+        );
       }
       return next;
 

@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'app/app_settings.dart';
 import 'app/config.dart';
 import 'data/account_scope.dart';
 
@@ -15,6 +17,7 @@ Future<void> main() async {
   final config = configFromEnvironment(isRelease: kReleaseMode);
   final Directory supportRoot = await getApplicationSupportDirectory();
   final Directory cacheRoot = await getApplicationCacheDirectory();
+  final prefs = await SharedPreferences.getInstance();
   runApp(
     buildApp(
       config,
@@ -23,6 +26,7 @@ Future<void> main() async {
         cacheRoot: cacheRoot,
         account: Account.fake,
       ),
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
     ),
   );
 }

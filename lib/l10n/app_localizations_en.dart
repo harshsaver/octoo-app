@@ -646,4 +646,249 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationsWhy(String person) {
     return 'So you know when $person needs you.';
   }
+
+  @override
+  String get detailsTitle => 'Details';
+
+  @override
+  String get changeOcto => 'Change Octo';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get nameLabel => 'Name';
+
+  @override
+  String get languageLabel => 'Language';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String syncPending(String person) {
+    return '$person\'s computer will update when it\'s back.';
+  }
+
+  @override
+  String get rules => 'Rules';
+
+  @override
+  String get activity => 'Activity';
+
+  @override
+  String get helpers => 'Helpers';
+
+  @override
+  String get thisMonth => 'This month';
+
+  @override
+  String get usageTasks => 'Tasks';
+
+  @override
+  String get usageQuestions => 'Questions';
+
+  @override
+  String get usageCost => 'Cost';
+
+  @override
+  String get usageUnavailable => 'Couldn\'t load this month.';
+
+  @override
+  String get muteNotifications => 'Mute notifications';
+
+  @override
+  String get removeOcto => 'Remove this Octo';
+
+  @override
+  String get removeForEveryone => 'Remove for everyone';
+
+  @override
+  String get removeFromPhone => 'Remove from my phone';
+
+  @override
+  String youSuffix(String name) {
+    return '$name (you)';
+  }
+
+  @override
+  String get helpersEmpty => 'Helpers show up once her computer is reachable.';
+
+  @override
+  String get rulesAskEveryChange => 'Ask before every change';
+
+  @override
+  String get rulesAskBeforeLooking => 'Ask before looking at the screen';
+
+  @override
+  String get rulesNever => 'Never…';
+
+  @override
+  String get rulesSites => 'Sites to stay off';
+
+  @override
+  String get addSite => 'Add a site';
+
+  @override
+  String get siteHint => 'example.com';
+
+  @override
+  String get invalidSite => 'Type a site like example.com';
+
+  @override
+  String get ruleApplying => 'Applying change';
+
+  @override
+  String ruleWaiting(String person) {
+    return 'Waiting for $person to approve';
+  }
+
+  @override
+  String ruleKeptOld(String person) {
+    return '$person kept the old rule';
+  }
+
+  @override
+  String rulesOffline(String person) {
+    return '$person\'s computer is offline. Rules can change when it\'s back.';
+  }
+
+  @override
+  String get ruleNoReply => 'No answer from her computer. Nothing changed.';
+
+  @override
+  String get ruleRefusedPlain => 'Her computer didn\'t take that change.';
+
+  @override
+  String rulesLooserNote(String person) {
+    return 'Making a rule looser waits for $person to approve it.';
+  }
+
+  @override
+  String removeSite(String site) {
+    return 'Remove $site';
+  }
+
+  @override
+  String get activityEmpty => 'Nothing here yet.';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get kindTask => 'Tasks';
+
+  @override
+  String get kindStep => 'Steps';
+
+  @override
+  String get kindConsent => 'OKs';
+
+  @override
+  String get kindLimit => 'Safety stops';
+
+  @override
+  String get kindTodo => 'To-dos';
+
+  @override
+  String get kindHelp => 'Help';
+
+  @override
+  String get kindScreen => 'Screen';
+
+  @override
+  String get kindMessage => 'Messages';
+
+  @override
+  String get kindPairing => 'Helpers';
+
+  @override
+  String get kindPolicy => 'Rules';
+
+  @override
+  String get kindOther => 'Other';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get accountFake =>
+      'Simulated account. This copy plays the family computers itself.';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get appLock => 'App lock';
+
+  @override
+  String get appLockDetail =>
+      'Ask for Face ID, fingerprint or your passcode after a minute away.';
+
+  @override
+  String get appLockUnavailable => 'This phone has no screen lock set up.';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get notifyHelp => 'Someone needs a hand';
+
+  @override
+  String get notifyTodo => 'Something is sent to you';
+
+  @override
+  String get notifyConsent => 'Octo is waiting for an OK';
+
+  @override
+  String get notifyTaskEnded => 'A task finishes';
+
+  @override
+  String get notifyPairing => 'A helper is added';
+
+  @override
+  String get notificationsLater =>
+      'Notifications arrive once you\'re signed in with October.';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String versionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutBody =>
+      'Octo by October. Tasks, to-dos and screenshots travel end to end encrypted. Screenshots stay on this phone for 7 days.';
+
+  @override
+  String get developer => 'Developer';
+
+  @override
+  String get showSimulator => 'Show simulator controls';
+
+  @override
+  String get lockTitle => 'Octo is locked';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get unlockReason => 'Unlock Octo';
 }

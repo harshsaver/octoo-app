@@ -5,11 +5,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../protocol/app_message.dart';
 import '../../protocol/host_message.dart';
+import '../../protocol/models/policy.dart';
 import '../../protocol/models/status.dart';
 import '../../protocol/models/todo.dart';
 import '../../protocol/pending.dart';
 import '../../transport/octo_link.dart';
 import '../outbox.dart';
+import '../policy_edit.dart';
 import '../screenshot_store.dart';
 import 'reducer.dart';
 import 'session_data.dart';
@@ -17,6 +19,36 @@ import 'session_store.dart';
 
 /// The outcome of asking her computer to stop a task.
 enum StopOutcome { stopped, offline, refused, noReply }
+
+/// The outcome of sending a rules edit. [sent] means only that her computer
+/// accepted the request; labels change when the policy itself arrives.
+sealed class PolicySetOutcome {
+  const PolicySetOutcome();
+}
+
+final class PolicySent extends PolicySetOutcome {
+  const PolicySent();
+}
+
+/// Another edit is still in flight, or nothing changed.
+final class PolicyNotSent extends PolicySetOutcome {
+  const PolicyNotSent();
+}
+
+final class PolicyOffline extends PolicySetOutcome {
+  const PolicyOffline();
+}
+
+/// Her computer refused it; show [message].
+final class PolicyRefused extends PolicySetOutcome {
+  const PolicyRefused(this.message);
+
+  final String? message;
+}
+
+final class PolicyNoReply extends PolicySetOutcome {
+  const PolicyNoReply();
+}
 
 /// One paired computer's conversation: the link, request matching, the
 /// reducer and write-through storage (PLAN §3.3).
@@ -195,6 +227,40 @@ class ComputerSession {
   Future<void> addNote(String id, String text) async {
     _apply(NoteAdded(id: id, at: _now(), text: text));
     await _writes;
+  }
+
+  /// Sends the whole proposed policy in one `policy.set` (PLAN §3.8 Rules).
+  /// Only one edit is in flight per computer. On an error or no reply the
+  /// pending labels go away (the switches never moved).
+  Future<PolicySetOutcome> setPolicy(Policy proposed) async {
+    final active = _data.policy ?? _data.status?.policy ?? const Policy();
+    if (_data.policyEdit != null) return const PolicyNotSent();
+    final pending = diffPolicy(active, proposed);
+    if (pending.isEmpty) return const PolicyNotSent();
+    final matcher = _matcher;
+    if (matcher == null || !isConnected) return const PolicyOffline();
+    _apply(
+      PolicyEditStarted(
+        PolicyEdit(proposed: proposed, pending: pending, startedAt: _now()),
+      ),
+    );
+    final request = PolicySet(requestId: _uuid.v4(), policy: proposed);
+    try {
+      final reply = await matcher.request(
+        request,
+        () => link.send(computerId, request.toJson()),
+      );
+      if (reply is ResultMessage && !reply.ok) {
+        _apply(const PolicyEditEnded());
+        return PolicyRefused(reply.message);
+      }
+      return const PolicySent();
+    } on RequestFailure catch (f) {
+      _apply(const PolicyEditEnded());
+      return f.kind == RequestFailureKind.sendFailed
+          ? const PolicyOffline()
+          : const PolicyNoReply();
+    }
   }
 
   /// Sends `profile.set` and waits for the result. Stage 2 sends it once at

@@ -31,6 +31,16 @@ class Computers extends Table {
   IntColumn get lastReadAt => integer().withDefault(const Constant(0))();
   IntColumn get addedAt => integer()();
 
+  /// Profile edits made on this phone; bumped before each `PATCH` so a crash
+  /// right after it still leaves the sync to her computer owed (PLAN §3.5).
+  IntColumn get profileGen => integer().withDefault(const Constant(0))();
+
+  /// The newest [profileGen] her computer confirmed.
+  IntColumn get profileSyncedGen => integer().withDefault(const Constant(0))();
+
+  /// Being removed: hidden from the list, kept until the unpair succeeds.
+  BoolColumn get tombstone => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -99,10 +109,17 @@ class OctoDatabase extends _$OctoDatabase {
   OctoDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(computers, computers.profileGen);
+        await m.addColumn(computers, computers.profileSyncedGen);
+        await m.addColumn(computers, computers.tombstone);
+      }
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

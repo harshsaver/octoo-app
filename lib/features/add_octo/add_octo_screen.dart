@@ -84,61 +84,12 @@ class _AddOctoScreenState extends ConsumerState<AddOctoScreen> {
   }
 
   Future<void> _typeCode() async {
-    final l = AppLocalizations.of(context);
-    final controller = TextEditingController();
     final code = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (sheet) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          OctoSpace.xl,
-          0,
-          OctoSpace.xl,
-          MediaQuery.viewInsetsOf(sheet).bottom + OctoSpace.xl,
-        ),
-        child: StatefulBuilder(
-          builder: (context, setSheet) {
-            final valid = normaliseTypedCode(controller.text) != null;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l.typeCodeTitle,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: OctoSpace.lg),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  maxLength: 9,
-                  textCapitalization: TextCapitalization.characters,
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(letterSpacing: 4),
-                  decoration: InputDecoration(
-                    hintText: l.typeCodeHint,
-                    counterText: '',
-                  ),
-                  onChanged: (_) => setSheet(() {}),
-                  onSubmitted: (v) {
-                    if (valid) Navigator.pop(sheet, v);
-                  },
-                ),
-                const SizedBox(height: OctoSpace.lg),
-                FilledButton(
-                  onPressed: valid
-                      ? () => Navigator.pop(sheet, controller.text)
-                      : null,
-                  child: Text(l.continueLabel),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+      builder: (_) => const _TypeCodeSheet(),
     );
-    controller.dispose();
     if (code != null) await _start(code);
   }
 
@@ -276,5 +227,68 @@ class _AddOctoScreenState extends ConsumerState<AddOctoScreen> {
     const names = ["Mom's laptop", "Dad's PC", "Grandma's iMac"];
     final count = ref.read(computersProvider).value?.length ?? 0;
     return 'octo-sim:${names[count % names.length]}';
+  }
+}
+
+/// "Type the code instead": an 8-character field. Owns its controller.
+class _TypeCodeSheet extends StatefulWidget {
+  const _TypeCodeSheet();
+
+  @override
+  State<_TypeCodeSheet> createState() => _TypeCodeSheetState();
+}
+
+class _TypeCodeSheetState extends State<_TypeCodeSheet> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final valid = normaliseTypedCode(_controller.text) != null;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        OctoSpace.xl,
+        0,
+        OctoSpace.xl,
+        MediaQuery.viewInsetsOf(context).bottom + OctoSpace.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.typeCodeTitle, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: OctoSpace.lg),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLength: 9,
+            textCapitalization: TextCapitalization.characters,
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(letterSpacing: 4),
+            decoration: InputDecoration(
+              hintText: l.typeCodeHint,
+              counterText: '',
+            ),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (v) {
+              if (valid) Navigator.pop(context, v);
+            },
+          ),
+          const SizedBox(height: OctoSpace.lg),
+          FilledButton(
+            onPressed: valid
+                ? () => Navigator.pop(context, _controller.text)
+                : null,
+            child: Text(l.continueLabel),
+          ),
+        ],
+      ),
+    );
   }
 }

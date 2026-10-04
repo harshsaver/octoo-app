@@ -8,6 +8,7 @@ import '../backend/octo_backend.dart';
 import '../db/database.dart';
 import '../screenshot_store.dart';
 import 'computer_session.dart';
+import 'session_data.dart';
 import 'session_store.dart';
 
 /// Owns one [ComputerSession] per computer for the whole app (PLAN §3.3).
@@ -21,6 +22,7 @@ class SessionsController {
     required this.store,
     required this.shots,
     required this.backend,
+    this.requestTimeout = const Duration(seconds: 20),
   });
 
   final OctoDatabase db;
@@ -28,6 +30,7 @@ class SessionsController {
   final SessionStore store;
   final ScreenshotStore shots;
   final OctoBackend backend;
+  final Duration requestTimeout;
 
   final Map<String, ComputerSession> _sessions = {};
   Set<String> _listed = {};
@@ -45,6 +48,14 @@ class SessionsController {
   Stream<String> get banners => _banners.stream;
 
   ComputerSession? session(String computerId) => _sessions[computerId];
+
+  final List<void Function(String computerId)> _onConnected = [];
+  final Set<String> _cleaning = {};
+
+  /// Calls [listener] each time a computer's link becomes connected (the
+  /// profile sync and other owed work run then).
+  void addConnectedListener(void Function(String computerId) listener) =>
+      _onConnected.add(listener);
 
   Future<void> start() async {
     await shots.purgeExpired();
@@ -64,6 +75,7 @@ class SessionsController {
     for (final s in _sessions.values) {
       s.connect();
     }
+    unawaited(_retryTombstones());
   }
 
   void pause() {
@@ -73,23 +85,58 @@ class SessionsController {
     }
   }
 
-  /// Removes a computer from this phone: the backend first for an owner
-  /// (on failure nothing changes), then `leave`, unpair and purge.
-  /// Stage 3 adds the tombstone that retries an unpair that fails.
+  /// Removes a computer (PLAN §3.8 Remove).
+  ///
+  /// Owner ("Remove for everyone"): `DELETE` first; if it fails this throws
+  /// and nothing changes. Helper ("Remove from my phone"): no backend call.
+  /// Then the computer becomes a hidden tombstone: its session, credentials
+  /// and pending `leave` stay until `unpair` succeeds (retried on start,
+  /// resume and connect). Only then are its data and screenshots purged.
   Future<void> remove(String computerId) async {
     final row = await db.computer(computerId);
     if (row == null) return;
-    if (row.role == 'owner') await backend.deleteComputer(computerId);
-    final session = _sessions[computerId];
-    if (session != null && session.isConnected) {
-      try {
-        await link.send(computerId, const {'type': 'leave'});
-      } on Object {
-        // Best effort; unpair revokes the pairing anyway.
-      }
+    if (row.role == 'owner' && !row.tombstone) {
+      await backend.deleteComputer(computerId);
     }
-    await link.unpair(computerId);
-    await _forget(computerId);
+    await db.updateComputer(
+      computerId,
+      const ComputersCompanion(tombstone: Value(true)),
+    );
+    await _cleanUp(computerId);
+  }
+
+  /// Whether any removal is still waiting for its unpair (sign-out warns).
+  Future<bool> hasPendingRemovals() async =>
+      (await db.allComputers()).any((c) => c.tombstone);
+
+  Future<void> _retryTombstones() async {
+    for (final row in await db.allComputers()) {
+      if (row.tombstone) await _cleanUp(row.id);
+    }
+  }
+
+  /// `leave` (best effort), then `unpair`; purges only after unpair worked.
+  Future<bool> _cleanUp(String computerId) async {
+    if (!_cleaning.add(computerId)) return false;
+    try {
+      final session = _sessions[computerId];
+      if (session != null && session.isConnected) {
+        try {
+          await link.send(computerId, const {'type': 'leave'});
+        } on Object {
+          // A leave that is only sent proves nothing; unpair decides.
+        }
+      }
+      try {
+        await link.unpair(computerId);
+      } on Object {
+        return false; // kept as a tombstone; retried later
+      }
+      await _forget(computerId);
+      return true;
+    } finally {
+      _cleaning.remove(computerId);
+    }
   }
 
   Future<void> dispose() async {
@@ -117,6 +164,9 @@ class SessionsController {
       if (!_sessions.containsKey(row.id)) {
         unawaited(ensure(row.id, bind: row.bind));
       }
+      if (row.tombstone && !_cleaning.contains(row.id)) {
+        unawaited(_cleanUp(row.id));
+      }
     }
     for (final id in _listed.difference(ids)) {
       final session = _sessions.remove(id);
@@ -135,6 +185,7 @@ class SessionsController {
       store: store,
       shots: shots,
       bind: bind,
+      requestTimeout: requestTimeout,
     );
     await session.open();
     _opening.remove(computerId)?.ignore();
@@ -143,9 +194,18 @@ class SessionsController {
       return session;
     }
     _sessions[computerId] = session;
+    var previous = session.data.link;
     _subs.add(
       session.changes.listen((data) {
         if (data.removed) unawaited(_removedByHer(computerId));
+        if (data.link == LinkState.connected &&
+            previous != LinkState.connected) {
+          for (final listener in _onConnected) {
+            listener(computerId);
+          }
+          unawaited(_retryTombstones());
+        }
+        previous = data.link;
       }),
     );
     if (_foreground) session.connect();
@@ -158,15 +218,33 @@ class SessionsController {
     final row = await db.computer(computerId);
     if (row == null) return;
     if (!_banners.isClosed) _banners.add(row.person);
+    try {
+      await link.unpair(computerId);
+    } on Object {
+      // Her computer already revoked it.
+    }
     await _forget(computerId);
   }
 
+  /// Deletes everything this phone holds for [computerId].
   Future<void> _forget(String computerId) async {
     final session = _sessions.remove(computerId);
-    await session?.dispose();
+    if (session != null) {
+      await shots.delete(_shotIds(session.data));
+      await session.dispose();
+    }
     await db.deleteComputer(computerId);
     if (!_changes.isClosed) _changes.add(null);
   }
+
+  static Set<String> _shotIds(SessionData data) => {
+    for (final shot in [
+      for (final t in data.tasks.values) t.shot,
+      for (final t in data.todos.values) t.shot,
+      for (final s in data.screens.values) s.shot,
+    ])
+      if (shot is LocalShot) shot.id,
+  };
 
   /// Marks everything in [computerId]'s thread read now.
   Future<void> markRead(String computerId) => db.updateComputer(

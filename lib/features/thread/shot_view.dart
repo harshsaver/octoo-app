@@ -45,7 +45,7 @@ class ShotView extends ConsumerWidget {
           : Text(
               text,
               textAlign: TextAlign.center,
-              style: TextStyle(color: colors.secondaryLabel),
+              style: TextStyle(color: colors.secondaryOnBubble),
             ),
     );
 

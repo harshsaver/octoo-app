@@ -329,7 +329,7 @@ class ThreadEntryView extends StatelessWidget {
                     Text(
                       l.octoToldHer(todo.answer!),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.secondaryLabel,
+                        color: colors.secondaryOnBubble,
                       ),
                     ),
                   ],
@@ -453,25 +453,24 @@ class _LiveTask extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: reduceMotion
-                    ? const SizedBox.shrink()
-                    : LinearProgressIndicator(
-                        minHeight: 3,
-                        color: colors.working,
-                        backgroundColor: colors.working.withValues(alpha: 0.15),
-                      ),
-              ),
+        if (!reduceMotion)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              minHeight: 3,
+              color: colors.working,
+              backgroundColor: colors.working.withValues(alpha: 0.15),
             ),
-            const SizedBox(width: OctoSpace.sm),
+          ),
+        // Wraps at large text sizes instead of overflowing.
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: OctoSpace.sm,
+          children: [
             Text(
               l.liveStep(task.steps.length + 1),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.secondaryLabel,
+                color: colors.secondaryOnBubble,
               ),
             ),
             TextButton(

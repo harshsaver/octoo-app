@@ -157,6 +157,45 @@ class $ComputersTable extends Computers
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _profileGenMeta = const VerificationMeta(
+    'profileGen',
+  );
+  @override
+  late final GeneratedColumn<int> profileGen = GeneratedColumn<int>(
+    'profile_gen',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _profileSyncedGenMeta = const VerificationMeta(
+    'profileSyncedGen',
+  );
+  @override
+  late final GeneratedColumn<int> profileSyncedGen = GeneratedColumn<int>(
+    'profile_synced_gen',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _tombstoneMeta = const VerificationMeta(
+    'tombstone',
+  );
+  @override
+  late final GeneratedColumn<bool> tombstone = GeneratedColumn<bool>(
+    'tombstone',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("tombstone" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -173,6 +212,9 @@ class $ComputersTable extends Computers
     sortOrder,
     lastReadAt,
     addedAt,
+    profileGen,
+    profileSyncedGen,
+    tombstone,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -278,6 +320,27 @@ class $ComputersTable extends Computers
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
+    if (data.containsKey('profile_gen')) {
+      context.handle(
+        _profileGenMeta,
+        profileGen.isAcceptableOrUnknown(data['profile_gen']!, _profileGenMeta),
+      );
+    }
+    if (data.containsKey('profile_synced_gen')) {
+      context.handle(
+        _profileSyncedGenMeta,
+        profileSyncedGen.isAcceptableOrUnknown(
+          data['profile_synced_gen']!,
+          _profileSyncedGenMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tombstone')) {
+      context.handle(
+        _tombstoneMeta,
+        tombstone.isAcceptableOrUnknown(data['tombstone']!, _tombstoneMeta),
+      );
+    }
     return context;
   }
 
@@ -343,6 +406,18 @@ class $ComputersTable extends Computers
         DriftSqlType.int,
         data['${effectivePrefix}added_at'],
       )!,
+      profileGen: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_gen'],
+      )!,
+      profileSyncedGen: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_synced_gen'],
+      )!,
+      tombstone: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}tombstone'],
+      )!,
     );
   }
 
@@ -373,6 +448,16 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
   /// Items newer than this are unread (epoch ms).
   final int lastReadAt;
   final int addedAt;
+
+  /// Profile edits made on this phone; bumped before each `PATCH` so a crash
+  /// right after it still leaves the sync to her computer owed (PLAN §3.5).
+  final int profileGen;
+
+  /// The newest [profileGen] her computer confirmed.
+  final int profileSyncedGen;
+
+  /// Being removed: hidden from the list, kept until the unpair succeeds.
+  final bool tombstone;
   const ComputerRow({
     required this.id,
     this.hostId,
@@ -388,6 +473,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
     required this.sortOrder,
     required this.lastReadAt,
     required this.addedAt,
+    required this.profileGen,
+    required this.profileSyncedGen,
+    required this.tombstone,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -414,6 +502,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
     map['sort_order'] = Variable<int>(sortOrder);
     map['last_read_at'] = Variable<int>(lastReadAt);
     map['added_at'] = Variable<int>(addedAt);
+    map['profile_gen'] = Variable<int>(profileGen);
+    map['profile_synced_gen'] = Variable<int>(profileSyncedGen);
+    map['tombstone'] = Variable<bool>(tombstone);
     return map;
   }
 
@@ -437,6 +528,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
       sortOrder: Value(sortOrder),
       lastReadAt: Value(lastReadAt),
       addedAt: Value(addedAt),
+      profileGen: Value(profileGen),
+      profileSyncedGen: Value(profileSyncedGen),
+      tombstone: Value(tombstone),
     );
   }
 
@@ -460,6 +554,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       lastReadAt: serializer.fromJson<int>(json['lastReadAt']),
       addedAt: serializer.fromJson<int>(json['addedAt']),
+      profileGen: serializer.fromJson<int>(json['profileGen']),
+      profileSyncedGen: serializer.fromJson<int>(json['profileSyncedGen']),
+      tombstone: serializer.fromJson<bool>(json['tombstone']),
     );
   }
   @override
@@ -480,6 +577,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'lastReadAt': serializer.toJson<int>(lastReadAt),
       'addedAt': serializer.toJson<int>(addedAt),
+      'profileGen': serializer.toJson<int>(profileGen),
+      'profileSyncedGen': serializer.toJson<int>(profileSyncedGen),
+      'tombstone': serializer.toJson<bool>(tombstone),
     };
   }
 
@@ -498,6 +598,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
     int? sortOrder,
     int? lastReadAt,
     int? addedAt,
+    int? profileGen,
+    int? profileSyncedGen,
+    bool? tombstone,
   }) => ComputerRow(
     id: id ?? this.id,
     hostId: hostId.present ? hostId.value : this.hostId,
@@ -513,6 +616,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
     sortOrder: sortOrder ?? this.sortOrder,
     lastReadAt: lastReadAt ?? this.lastReadAt,
     addedAt: addedAt ?? this.addedAt,
+    profileGen: profileGen ?? this.profileGen,
+    profileSyncedGen: profileSyncedGen ?? this.profileSyncedGen,
+    tombstone: tombstone ?? this.tombstone,
   );
   ComputerRow copyWithCompanion(ComputersCompanion data) {
     return ComputerRow(
@@ -534,6 +640,13 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
           ? data.lastReadAt.value
           : this.lastReadAt,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      profileGen: data.profileGen.present
+          ? data.profileGen.value
+          : this.profileGen,
+      profileSyncedGen: data.profileSyncedGen.present
+          ? data.profileSyncedGen.value
+          : this.profileSyncedGen,
+      tombstone: data.tombstone.present ? data.tombstone.value : this.tombstone,
     );
   }
 
@@ -553,7 +666,10 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
           ..write('muted: $muted, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('lastReadAt: $lastReadAt, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('profileGen: $profileGen, ')
+          ..write('profileSyncedGen: $profileSyncedGen, ')
+          ..write('tombstone: $tombstone')
           ..write(')'))
         .toString();
   }
@@ -574,6 +690,9 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
     sortOrder,
     lastReadAt,
     addedAt,
+    profileGen,
+    profileSyncedGen,
+    tombstone,
   );
   @override
   bool operator ==(Object other) =>
@@ -592,7 +711,10 @@ class ComputerRow extends DataClass implements Insertable<ComputerRow> {
           other.muted == this.muted &&
           other.sortOrder == this.sortOrder &&
           other.lastReadAt == this.lastReadAt &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.profileGen == this.profileGen &&
+          other.profileSyncedGen == this.profileSyncedGen &&
+          other.tombstone == this.tombstone);
 }
 
 class ComputersCompanion extends UpdateCompanion<ComputerRow> {
@@ -610,6 +732,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
   final Value<int> sortOrder;
   final Value<int> lastReadAt;
   final Value<int> addedAt;
+  final Value<int> profileGen;
+  final Value<int> profileSyncedGen;
+  final Value<bool> tombstone;
   final Value<int> rowid;
   const ComputersCompanion({
     this.id = const Value.absent(),
@@ -626,6 +751,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
     this.sortOrder = const Value.absent(),
     this.lastReadAt = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.profileGen = const Value.absent(),
+    this.profileSyncedGen = const Value.absent(),
+    this.tombstone = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ComputersCompanion.insert({
@@ -643,6 +771,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
     this.sortOrder = const Value.absent(),
     this.lastReadAt = const Value.absent(),
     required int addedAt,
+    this.profileGen = const Value.absent(),
+    this.profileSyncedGen = const Value.absent(),
+    this.tombstone = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        computerName = Value(computerName),
@@ -663,6 +794,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
     Expression<int>? sortOrder,
     Expression<int>? lastReadAt,
     Expression<int>? addedAt,
+    Expression<int>? profileGen,
+    Expression<int>? profileSyncedGen,
+    Expression<bool>? tombstone,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -680,6 +814,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (lastReadAt != null) 'last_read_at': lastReadAt,
       if (addedAt != null) 'added_at': addedAt,
+      if (profileGen != null) 'profile_gen': profileGen,
+      if (profileSyncedGen != null) 'profile_synced_gen': profileSyncedGen,
+      if (tombstone != null) 'tombstone': tombstone,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -699,6 +836,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
     Value<int>? sortOrder,
     Value<int>? lastReadAt,
     Value<int>? addedAt,
+    Value<int>? profileGen,
+    Value<int>? profileSyncedGen,
+    Value<bool>? tombstone,
     Value<int>? rowid,
   }) {
     return ComputersCompanion(
@@ -716,6 +856,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
       sortOrder: sortOrder ?? this.sortOrder,
       lastReadAt: lastReadAt ?? this.lastReadAt,
       addedAt: addedAt ?? this.addedAt,
+      profileGen: profileGen ?? this.profileGen,
+      profileSyncedGen: profileSyncedGen ?? this.profileSyncedGen,
+      tombstone: tombstone ?? this.tombstone,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -765,6 +908,15 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
     if (addedAt.present) {
       map['added_at'] = Variable<int>(addedAt.value);
     }
+    if (profileGen.present) {
+      map['profile_gen'] = Variable<int>(profileGen.value);
+    }
+    if (profileSyncedGen.present) {
+      map['profile_synced_gen'] = Variable<int>(profileSyncedGen.value);
+    }
+    if (tombstone.present) {
+      map['tombstone'] = Variable<bool>(tombstone.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -788,6 +940,9 @@ class ComputersCompanion extends UpdateCompanion<ComputerRow> {
           ..write('sortOrder: $sortOrder, ')
           ..write('lastReadAt: $lastReadAt, ')
           ..write('addedAt: $addedAt, ')
+          ..write('profileGen: $profileGen, ')
+          ..write('profileSyncedGen: $profileSyncedGen, ')
+          ..write('tombstone: $tombstone, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2669,6 +2824,9 @@ typedef $$ComputersTableCreateCompanionBuilder = ComputersCompanion Function({
   Value<int> sortOrder,
   Value<int> lastReadAt,
   required int addedAt,
+  Value<int> profileGen,
+  Value<int> profileSyncedGen,
+  Value<bool> tombstone,
   Value<int> rowid,
 });
 typedef $$ComputersTableUpdateCompanionBuilder = ComputersCompanion Function({
@@ -2686,6 +2844,9 @@ typedef $$ComputersTableUpdateCompanionBuilder = ComputersCompanion Function({
   Value<int> sortOrder,
   Value<int> lastReadAt,
   Value<int> addedAt,
+  Value<int> profileGen,
+  Value<int> profileSyncedGen,
+  Value<bool> tombstone,
   Value<int> rowid,
 });
 
@@ -2765,6 +2926,21 @@ class $$ComputersTableFilterComposer
 
   ColumnFilters<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get profileGen => $composableBuilder(
+    column: $table.profileGen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get profileSyncedGen => $composableBuilder(
+    column: $table.profileSyncedGen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get tombstone => $composableBuilder(
+    column: $table.tombstone,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2847,6 +3023,21 @@ class $$ComputersTableOrderingComposer
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get profileGen => $composableBuilder(
+    column: $table.profileGen,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get profileSyncedGen => $composableBuilder(
+    column: $table.profileSyncedGen,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get tombstone => $composableBuilder(
+    column: $table.tombstone,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ComputersTableAnnotationComposer
@@ -2903,6 +3094,19 @@ class $$ComputersTableAnnotationComposer
 
   GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get profileGen => $composableBuilder(
+    column: $table.profileGen,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get profileSyncedGen => $composableBuilder(
+    column: $table.profileSyncedGen,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get tombstone =>
+      $composableBuilder(column: $table.tombstone, builder: (column) => column);
 }
 
 class $$ComputersTableTableManager
@@ -2950,6 +3154,9 @@ class $$ComputersTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> lastReadAt = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
+                Value<int> profileGen = const Value.absent(),
+                Value<int> profileSyncedGen = const Value.absent(),
+                Value<bool> tombstone = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ComputersCompanion(
                 id: id,
@@ -2966,6 +3173,9 @@ class $$ComputersTableTableManager
                 sortOrder: sortOrder,
                 lastReadAt: lastReadAt,
                 addedAt: addedAt,
+                profileGen: profileGen,
+                profileSyncedGen: profileSyncedGen,
+                tombstone: tombstone,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2984,6 +3194,9 @@ class $$ComputersTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> lastReadAt = const Value.absent(),
                 required int addedAt,
+                Value<int> profileGen = const Value.absent(),
+                Value<int> profileSyncedGen = const Value.absent(),
+                Value<bool> tombstone = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ComputersCompanion.insert(
                 id: id,
@@ -3000,6 +3213,9 @@ class $$ComputersTableTableManager
                 sortOrder: sortOrder,
                 lastReadAt: lastReadAt,
                 addedAt: addedAt,
+                profileGen: profileGen,
+                profileSyncedGen: profileSyncedGen,
+                tombstone: tombstone,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

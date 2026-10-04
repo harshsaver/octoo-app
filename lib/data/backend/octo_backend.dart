@@ -49,6 +49,21 @@ class BackendComputer {
   );
 }
 
+/// `GET /api/octo/usage`: this month's tasks, questions and cost.
+class Usage {
+  const Usage({
+    required this.tasks,
+    required this.questions,
+    required this.cost,
+  });
+
+  final int tasks;
+  final int questions;
+
+  /// Formatted by the backend ("\$1.80").
+  final String cost;
+}
+
 /// `{"error":{"code","message"}}`. Show [message]; [code] is never shown.
 class BackendException implements Exception {
   const BackendException(this.code, this.message);
@@ -81,6 +96,9 @@ abstract class OctoBackend {
 
   /// `DELETE /api/octo/computers/{id}` (owner).
   Future<void> deleteComputer(String id);
+
+  /// `GET /api/octo/usage?computerId=&month=` (month as `YYYY-MM`).
+  Future<Usage> usage(String computerId, String month);
 }
 
 /// In-memory backend for fake mode and tests. Computers appear on the first
@@ -127,6 +145,13 @@ class FakeBackend implements OctoBackend {
   Future<void> deleteComputer(String id) async {
     _maybeFail();
     _computers.remove(id);
+  }
+
+  /// A made-up month, like the simulator's results.
+  @override
+  Future<Usage> usage(String computerId, String month) async {
+    _maybeFail();
+    return const Usage(tasks: 12, questions: 4, cost: '\$1.80');
   }
 
   void _maybeFail() {
