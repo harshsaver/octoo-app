@@ -124,4 +124,57 @@ void main() {
     expect(pairingCode(_hex('000f424000')), '000000');
     expect(pairingCode(_hex('00003039ff')), '012345');
   });
+
+  test('truncated handshake messages are refused at every step', () async {
+    final p = channelPrologue(_v.hostId, _v.bind, 9);
+    Future<NoiseHandshake> start(bool initiator) async =>
+        NoiseHandshake.start(initiator: initiator, staticKey: await NoiseKeyPair.generate(), prologue: p);
+
+    final r1 = await start(false);
+    await expectLater(r1.readMessage(Uint8List(31)), throwsA(isA<NoiseException>()));
+
+    final i2 = await start(true), r2 = await start(false);
+    await r2.readMessage(await i2.writeMessage());
+    final m2 = await r2.writeMessage();
+    await expectLater(i2.readMessage(m2.sublist(0, 79)), throwsA(isA<NoiseException>()));
+
+    final i3 = await start(true), r3 = await start(false);
+    await r3.readMessage(await i3.writeMessage());
+    await i3.readMessage(await r3.writeMessage());
+    final m3 = await i3.writeMessage();
+    await expectLater(r3.readMessage(m3.sublist(0, 47)), throwsA(isA<NoiseException>()));
+  });
+
+  test('a low-order (all-zero) public key is refused, as libsodium does', () async {
+    final k = await NoiseKeyPair.generate();
+    await expectLater(k.dh(Uint8List(32)), throwsA(isA<NoiseException>().having((e) => e.authentication, 'auth', true)));
+    // A message 1 carrying that key as its ephemeral fails the responder.
+    final i = await NoiseHandshake.start(initiator: true, staticKey: k, prologue: channelPrologue(_v.hostId, _v.bind, 3));
+    final r = await NoiseHandshake.start(
+      initiator: false,
+      staticKey: await NoiseKeyPair.generate(),
+      prologue: channelPrologue(_v.hostId, _v.bind, 3),
+    );
+    await r.readMessage(Uint8List.fromList([...Uint8List(32), ...(await i.writeMessage()).sublist(32)]));
+    await expectLater(r.writeMessage(), throwsA(isA<NoiseException>()));
+  });
+
+  test('2^31 messages per direction, then the channel refuses (no rekey)', () async {
+    final key = List<int>.generate(32, (i) => i);
+    final send = NoiseCipher(key, counter: channelMessageLimit - 1);
+    final receive = NoiseCipher(key, counter: channelMessageLimit - 1);
+    final last = await send.encrypt([1]);
+    expect(await receive.decrypt(last), [1]);
+    await expectLater(send.encrypt([2]), throwsA(isA<NoiseException>()));
+    await expectLater(receive.decrypt(last), throwsA(isA<NoiseException>()));
+  });
+
+  test("the pin rejects another computer's key and an all-zero key", () {
+    final a = Uint8List.fromList(List.filled(32, 1)), b = Uint8List.fromList(List.filled(32, 2));
+    pinnedOrThrow(a, a);
+    expect(() => pinnedOrThrow(a, b), throwsA(isA<NoiseException>().having((e) => e.authentication, 'auth', true)));
+    expect(() => pinnedOrThrow(Uint8List(32), Uint8List(32)), throwsA(isA<NoiseException>()));
+    expect(() => pinnedOrThrow(null, a), throwsA(isA<NoiseException>()));
+    expect(() => pinnedOrThrow(a.sublist(0, 31), a), throwsA(isA<NoiseException>()));
+  });
 }

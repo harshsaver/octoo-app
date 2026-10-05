@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:cryptography/cryptography.dart';
+import 'package:cryptography/dart.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,6 +46,36 @@ void main() {
       '22222222-2222-4222-8222-222222222222\nRBNvo1WzZ4oRRq0W9-hknpT7T8If536DEMBg9hyq_4o\n1790000000',
     );
     expect(isCanonicalUuid(uuidV4()), isTrue);
+  });
+
+  test('signed requests: the timestamp is whole seconds of now, the signature verifies, bad ids are refused', () async {
+    final key = await SigningKey.fromSeed(List.filled(32, 7));
+    const session = '11111111-1111-4111-8111-111111111111';
+    final now = DateTime.fromMillisecondsSinceEpoch(1790000000999);
+    final body = utf8.encode('{"role":"device"}');
+    final headers = await signRequest('ticket-device', body, session, key, now: now);
+    expect(headers['x-october-request-ts'], '1790000000');
+    expect(isCanonicalUuid(headers['x-october-request-id']), isTrue);
+    final message = await signedRequestMessage(
+      'ticket-device',
+      body,
+      session,
+      headers['x-october-request-id']!,
+      1790000000,
+    );
+    final ok = await DartEd25519().verify(
+      message,
+      signature: Signature(
+        b64urlDecode(headers['x-october-signature']!),
+        publicKey: SimplePublicKey(key.publicKey, type: KeyPairType.ed25519),
+      ),
+    );
+    expect(ok, isTrue);
+    // One changed byte of the body breaks it.
+    final other = await signedRequestMessage('ticket-device', utf8.encode('{"role":"host"}'), session, headers['x-october-request-id']!, 1790000000);
+    expect(_hex(other), isNot(_hex(message)));
+    await expectLater(signedRequestMessage('Ticket', body, session, uuidV4(), 1), throwsArgumentError);
+    await expectLater(signedRequestMessage('ticket-device', body, 'NOT-A-UUID', uuidV4(), 1), throwsArgumentError);
   });
 
   test('pairing links: valid, expired-but-well-formed, and broken', () {
