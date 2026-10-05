@@ -22,6 +22,9 @@ abstract class AuthService {
   /// Signs in with the 6-digit code from that email.
   Future<void> verifyEmailCode(String email, String code);
 
+  /// Email and password (October accounts can have one; needs no redirect).
+  Future<void> signInWithPassword(String email, String password);
+
   Future<void> signInWithGoogle();
 
   Future<void> signInWithApple();
@@ -78,6 +81,15 @@ class FakeAuth implements AuthService {
       throw const AuthException(
         "That code didn't work. Check the email and try again.",
       );
+    }
+    _set(account);
+  }
+
+  /// Any email with the password `octo-test` signs in.
+  @override
+  Future<void> signInWithPassword(String email, String password) async {
+    if (password != 'octo-test') {
+      throw const AuthException("That email and password don't match.");
     }
     _set(account);
   }

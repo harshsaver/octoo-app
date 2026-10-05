@@ -83,6 +83,11 @@ class SupabaseAuth implements AuthService {
   );
 
   @override
+  Future<void> signInWithPassword(String email, String password) => _guard(
+    () => _auth.signInWithPassword(email: email.trim(), password: password),
+  );
+
+  @override
   Future<void> signInWithGoogle() => _guard(() async {
     final started = await _auth.signInWithOAuth(
       sb.OAuthProvider.google,
@@ -155,7 +160,10 @@ class SupabaseAuth implements AuthService {
   static String _message(sb.AuthException e) {
     final status = int.tryParse(e.statusCode ?? '');
     if (status == 429) return 'Too many tries. Wait a minute, then try again.';
-    if (e.code == 'otp_expired' || e.code == 'invalid_credentials') {
+    if (e.code == 'invalid_credentials') {
+      return "That email and password don't match.";
+    }
+    if (e.code == 'otp_expired') {
       return "That code didn't work. Check the email and try again.";
     }
     return "Couldn't sign in. Try again.";

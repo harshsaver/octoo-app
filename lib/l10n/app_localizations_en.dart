@@ -957,4 +957,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planNeeded => 'See plans';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get usePassword => 'Use a password instead';
+
+  @override
+  String get useEmailLink => 'Email me a link instead';
 }

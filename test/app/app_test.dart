@@ -368,6 +368,32 @@ void stage4Tests() {
     },
   );
 
+  testWidgets('or sign in with email and password', (tester) async {
+    final auth = FakeAuth(signedIn: false);
+    await tester.pumpWidget(_app(auth: auth));
+    await _pump(tester);
+    await tester.tap(find.text('Sign in with October'));
+    await _pump(tester);
+    await tester.tap(find.text('Use a password instead'));
+    await _pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Email'),
+      'harsh@example.com',
+    );
+    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'wrong');
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await _pump(tester);
+    expect(find.text("That email and password don't match."), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Password'),
+      'octo-test',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await _pump(tester, const Duration(seconds: 2));
+    expect(find.text('Add your first Octo'), findsOneWidget);
+    await _tearDown(tester);
+  });
+
   testWidgets('sign out from Settings returns to the welcome screen', (
     tester,
   ) async {
@@ -382,7 +408,9 @@ void stage4Tests() {
     await tester.tap(find.widgetWithText(FilledButton, 'Sign out'));
     // Sign-out deletes this account's files: real I/O needs real time.
     for (var i = 0; i < 10 && auth.current != null; i++) {
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
       await tester.pump(const Duration(milliseconds: 100));
     }
     await _pump(tester, const Duration(seconds: 1));

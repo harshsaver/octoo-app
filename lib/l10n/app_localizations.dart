@@ -1731,6 +1731,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'See plans'**
   String get planNeeded;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @usePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a password instead'**
+  String get usePassword;
+
+  /// No description provided for @useEmailLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a link instead'**
+  String get useEmailLink;
 }
 
 class _AppLocalizationsDelegate

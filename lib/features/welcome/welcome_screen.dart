@@ -69,6 +69,8 @@ class SignInSheet extends ConsumerStatefulWidget {
 class _SignInSheetState extends ConsumerState<SignInSheet> {
   final _email = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
+  bool _withPassword = false;
   String? _sentTo;
   String? _error;
   bool _busy = false;
@@ -77,6 +79,7 @@ class _SignInSheetState extends ConsumerState<SignInSheet> {
   void dispose() {
     _email.dispose();
     _code.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -126,12 +129,31 @@ class _SignInSheetState extends ConsumerState<SignInSheet> {
                 autofillHints: const [AutofillHints.email],
                 autocorrect: false,
                 decoration: InputDecoration(labelText: l.emailLabel),
-                onSubmitted: (_) => _sendLink(),
+                onSubmitted: (_) => _withPassword ? null : _sendLink(),
               ),
+              if (_withPassword) ...[
+                const SizedBox(height: OctoSpace.sm),
+                TextField(
+                  controller: _password,
+                  enabled: !_busy,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                  decoration: InputDecoration(labelText: l.passwordLabel),
+                  onSubmitted: (_) => _signInWithPassword(),
+                ),
+              ],
               const SizedBox(height: OctoSpace.md),
               FilledButton(
-                onPressed: _busy ? null : _sendLink,
-                child: Text(l.sendLink),
+                onPressed: _busy
+                    ? null
+                    : (_withPassword ? _signInWithPassword : _sendLink),
+                child: Text(_withPassword ? l.signInButton : l.sendLink),
+              ),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => setState(() => _withPassword = !_withPassword),
+                child: Text(_withPassword ? l.useEmailLink : l.usePassword),
               ),
             ] else ...[
               Text(l.linkSent(sent)),
@@ -208,6 +230,12 @@ class _SignInSheetState extends ConsumerState<SignInSheet> {
       await auth.sendEmailLink(email);
       if (mounted) setState(() => _sentTo = email);
     });
+  }
+
+  void _signInWithPassword() {
+    final email = _email.text.trim();
+    if (email.isEmpty || _password.text.isEmpty) return;
+    _run((auth) => auth.signInWithPassword(email, _password.text));
   }
 
   void _verify(String email) {

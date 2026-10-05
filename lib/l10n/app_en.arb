@@ -689,5 +689,8 @@
   "pushOpen": "Open",
   "notNow": "Not now",
   "allowNotifications": "Allow notifications",
-  "planNeeded": "See plans"
+  "planNeeded": "See plans",
+  "passwordLabel": "Password",
+  "usePassword": "Use a password instead",
+  "useEmailLink": "Email me a link instead"
 }
