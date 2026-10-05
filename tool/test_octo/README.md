@@ -2,8 +2,14 @@
 
 A stand-in for the Octo desktop app, for trying the family app for real:
 real October sign-in, real pairing, October's real relay, end-to-end
-encryption. Only "Mom" is simulated (the app's `SimulatedComputer`), and you
-play her from the terminal.
+encryption. "Mom" is you, at the terminal: you approve what Octo does.
+
+With an Anthropic API key, tasks are **done for real on this laptop** by
+Claude (`claude-opus-5-5`): it takes real screenshots, checks the real
+network, memory, disk, battery and running programs, and can run shell
+commands, **each shown to you first and run only if you type `y`**. The
+answers and screenshots on the phone are real. Without a key, tasks and
+screenshots are simulated (canned answers, a sample picture).
 
 ## Needs
 
@@ -12,6 +18,11 @@ play her from the terminal.
 - The phone signed in to **the same account** (the app's "Use a password"
   option works).
 - `config/real.json` (gitignored), with `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+- For real tasks: `export ANTHROPIC_API_KEY=sk-ant-…` (from
+  console.anthropic.com → API keys). Usage is billed to that key.
+- Screenshots use the desktop portal (GNOME/KDE on Wayland): the first one
+  may ask "Allow screenshot?" once. Needs `python3-gobject` and ImageMagick
+  (`magick`), both standard on Fedora.
 
 ## Run
 
@@ -34,7 +45,8 @@ computer.
 | --- | --- |
 | `pair` | a new QR code (each works for 5 minutes, once) |
 | `y` / `n` | answer a pairing request |
-| `ok` / `no` | Mom answers the question on her screen |
+| `ok` / `no` | Mom answers the question on her screen (a task, showing the screen) |
+| `y` / `n` | also: allow or refuse a shell command Octo wants to run |
 | `todo` | Mom saves a to-do for you (with a screenshot) |
 | `sos` or `help <text>` | Mom asks for help |
 | `offline` / `online` | the computer goes away / comes back |
@@ -42,7 +54,8 @@ computer.
 | `auto` | autopilot: Mom answers by herself after a moment |
 | `status`, `quit` | |
 
-Start with `--autopilot` to have Mom answer everything by herself, and
+Start with `--autopilot` to have Mom answer task questions by herself
+(shell commands still need your `y`), `--no-ai` to force simulated tasks, and
 `--name "Dad's PC" --person Dad` for another computer (give it its own
 `--state` file).
 

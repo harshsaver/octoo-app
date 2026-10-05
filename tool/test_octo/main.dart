@@ -20,6 +20,8 @@ import 'package:octo_family/transport/simulator/simulated_computer.dart';
 import 'package:qr/qr.dart';
 
 import 'host_relay.dart';
+import 'laptop_tools.dart';
+import 'octo_brain.dart';
 import 'october_cloud.dart';
 import 'test_octo.dart';
 
@@ -32,6 +34,12 @@ Future<void> main(List<String> arguments) async {
     ..addOption('name', defaultsTo: "Mom's laptop", help: 'The computer name the phone sees.')
     ..addOption('person', defaultsTo: 'Mom')
     ..addFlag('autopilot', help: 'Mom answers every question by herself after a moment.')
+    ..addFlag(
+      'ai',
+      defaultsTo: true,
+      help: 'Do tasks for real with Claude and this laptop (needs ANTHROPIC_API_KEY). '
+          'With --no-ai, tasks and screenshots are simulated.',
+    )
     ..addFlag('help', abbr: 'h', negatable: false);
   final args = parser.parse(arguments);
   if (args.flag('help')) {
@@ -86,18 +94,51 @@ Future<void> main(List<String> arguments) async {
   );
 
   final questions = <Completer<bool>>[];
+  Future<bool> ask(String line) {
+    _say(line);
+    final answer = Completer<bool>();
+    questions.add(answer);
+    return answer.future;
+  }
+
+  final claudeKey = Platform.environment['ANTHROPIC_API_KEY'];
+  OctoBrain? brain;
+  if (args.flag('ai') && (claudeKey == null || claudeKey.isEmpty)) {
+    _say('No ANTHROPIC_API_KEY: tasks and screenshots will be simulated. '
+        'Set it (export ANTHROPIC_API_KEY=…) and restart for real answers from this laptop.');
+  } else if (args.flag('ai')) {
+    final script = '${File.fromUri(Platform.script).parent.path}/bin/screenshot.py';
+    brain = OctoBrain(
+      apiKey: claudeKey!,
+      person: args.option('person')!,
+      computerName: args.option('name')!,
+      osName: (await runProcess('bash', ['-c', '. /etc/os-release; echo "\$PRETTY_NAME"'])).out,
+      log: _say,
+      screenCapture: () async {
+        try {
+          return WorkScreen(dataUri: jpegDataUri(await captureScreen(script)));
+        } on Object catch (e) {
+          _say('Screenshot failed: $e');
+          return null;
+        }
+      },
+      tools: laptopTools(
+        screenshotScript: script,
+        approveCommand: (command, why) =>
+            ask('Octo wants to run:  $command\n           why: $why\n           Type y to allow, n to refuse.'),
+        showOnScreen: computer.show,
+      ),
+    );
+    computer.worker = brain;
+    _say('AI on: tasks run for real on this laptop with $octoModel; shell commands need your y.');
+  }
   final octo = TestOcto(
     cloud: cloud,
     computer: computer,
     state: state,
     say: _say,
     save: () => state.save(stateFile),
-    approve: (label, code) {
-      _say('Let "$label" help on this computer? Check the phone shows $code. Type y or n.');
-      final answer = Completer<bool>();
-      questions.add(answer);
-      return answer.future;
-    },
+    approve: (label, code) => ask('Let "$label" help on this computer? Check the phone shows $code. Type y or n.'),
   );
   octo.relay = HostRelay(
     relay: Uri.parse(args.option('relay')!),
@@ -177,6 +218,7 @@ Future<void> main(List<String> arguments) async {
           settings.autopilot = !settings.autopilot;
           _say('Autopilot ${settings.autopilot ? 'on' : 'off'}.');
         case 'quit' || 'exit':
+          brain?.close();
           await octo.dispose();
           exit(0);
         case '':
