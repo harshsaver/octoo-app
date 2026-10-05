@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:octo_family/app/app.dart';
 import 'package:octo_family/app/app_settings.dart';
 import 'package:octo_family/app/config.dart';
 import 'package:octo_family/app/providers.dart';
 import 'package:octo_family/data/account_scope.dart';
+import 'package:octo_family/data/auth/auth_service.dart';
+import 'package:octo_family/data/push/push_service.dart';
 import 'package:octo_family/data/db/database.dart';
 import 'package:octo_family/data/screenshot_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,17 +24,19 @@ class _QuietShots extends ScreenshotStore {
   Future<void> purgeExpired() async {}
 }
 
-final _dirs = AccountDirs(
+final _roots = AppRoots(
   support: Directory('/nonexistent/s'),
   cache: Directory('/nonexistent/c'),
 );
 
 late SharedPreferences _prefs;
 
-Widget _app() => buildApp(
+Widget _app({AuthService? auth, PushService? push}) => buildApp(
   ConfigOk(AppConfig.fake),
-  dirs: _dirs,
+  roots: _roots,
   overrides: [
+    if (auth != null) authServiceProvider.overrideWithValue(auth),
+    if (push != null) pushServiceProvider.overrideWithValue(push),
     databaseProvider.overrideWith((ref) {
       final db = OctoDatabase(NativeDatabase.memory());
       ref.onDispose(db.close);
@@ -76,7 +82,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      buildApp(parseConfig({}, isRelease: false), dirs: _dirs),
+      buildApp(parseConfig({}, isRelease: false), roots: _roots),
     );
     await tester.pumpAndSettle();
     expect(find.text("This build isn't configured"), findsOneWidget);
@@ -89,7 +95,7 @@ void main() {
     await tester.pumpWidget(
       buildApp(
         parseConfig({'OCTO_MODE': 'fake'}, isRelease: true),
-        dirs: _dirs,
+        roots: _roots,
       ),
     );
     await tester.pumpAndSettle();
@@ -204,6 +210,7 @@ void main() {
   });
 
   stage3Tests();
+  stage4Tests();
 }
 
 /// Adds a simulated computer through the UI and lands in its thread.
@@ -317,6 +324,152 @@ void stage3Tests() {
     await _pump(tester);
     expect(find.byTooltip('Play Mom (simulator)'), findsOneWidget);
     await _checkAccessibility(tester);
+    await _tearDown(tester);
+  });
+}
+
+void stage4Tests() {
+  testWidgets(
+    'signed out: welcome, sign in with the email code, then the list',
+    (tester) async {
+      final auth = FakeAuth(signedIn: false);
+      await tester.pumpWidget(_app(auth: auth));
+      await _pump(tester);
+      expect(
+        find.text("Help your family's computers, from your phone"),
+        findsOneWidget,
+      );
+      await _checkAccessibility(tester);
+
+      await tester.tap(find.text('Sign in with October'));
+      await _pump(tester);
+      await tester.enterText(find.byType(TextField), 'harsh@example.com');
+      await tester.tap(find.text('Email me a link'));
+      await _pump(tester);
+      expect(auth.sentLinks, ['harsh@example.com']);
+      expect(
+        find.textContaining('Check your email at harsh@example.com'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), '000000');
+      await tester.tap(find.text('Sign in'));
+      await _pump(tester);
+      expect(
+        find.text("That code didn't work. Check the email and try again."),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.tap(find.text('Sign in'));
+      await _pump(tester, const Duration(seconds: 2));
+      expect(find.text('Add your first Octo'), findsOneWidget);
+      await _tearDown(tester);
+    },
+  );
+
+  testWidgets('or sign in with email and password', (tester) async {
+    final auth = FakeAuth(signedIn: false);
+    await tester.pumpWidget(_app(auth: auth));
+    await _pump(tester);
+    await tester.tap(find.text('Sign in with October'));
+    await _pump(tester);
+    await tester.tap(find.text('Use a password instead'));
+    await _pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Email'),
+      'harsh@example.com',
+    );
+    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'wrong');
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await _pump(tester);
+    expect(find.text("That email and password don't match."), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Password'),
+      'octo-test',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await _pump(tester, const Duration(seconds: 2));
+    expect(find.text('Add your first Octo'), findsOneWidget);
+    await _tearDown(tester);
+  });
+
+  testWidgets('sign out from Settings returns to the welcome screen', (
+    tester,
+  ) async {
+    final auth = FakeAuth();
+    await tester.pumpWidget(_app(auth: auth));
+    await _pump(tester);
+    await tester.tap(find.byTooltip('Settings'));
+    await _pump(tester);
+    await tester.tap(find.text('Sign out'));
+    await _pump(tester);
+    expect(find.text('Sign out of Octo?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign out'));
+    // Sign-out deletes this account's files: real I/O needs real time.
+    for (var i = 0; i < 10 && auth.current != null; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await _pump(tester, const Duration(seconds: 1));
+    expect(auth.current, isNull);
+    expect(find.text('Sign in with October'), findsOneWidget);
+    await _tearDown(tester);
+  });
+
+  testWidgets('a tapped push opens that Octo; a foreground push is a banner', (
+    tester,
+  ) async {
+    final push = NoPush();
+    await tester.pumpWidget(_app(push: push));
+    await _pump(tester);
+    await _addOcto(tester);
+    await tester.pageBack();
+    await _pump(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(OctoApp)),
+    );
+    final id = container.read(computersProvider).value!.single.id;
+
+    // While the app is open: an in-app banner with Open.
+    push.deliver(
+      PushMessage(computerId: id, kind: 'help', title: 'Mom needs a hand'),
+    );
+    await _pump(tester);
+    expect(find.widgetWithText(SnackBar, 'Mom needs a hand'), findsOneWidget);
+    await tester.tap(find.text('Open'));
+    await _pump(tester, const Duration(seconds: 2));
+    expect(find.text('Ask Octo…'), findsOneWidget, reason: 'the thread');
+
+    // A tap on a notification for a computer this phone doesn't know: the list.
+    push.deliver(
+      const PushMessage(computerId: 'c_unknown', kind: 'help'),
+      tapped: true,
+    );
+    await _pump(tester, const Duration(seconds: 1));
+    expect(find.text('Ask Octo…'), findsNothing);
+
+    // A tap for a known one: its thread.
+    push.deliver(PushMessage(computerId: id, kind: 'taskEnded'), tapped: true);
+    await _pump(tester, const Duration(seconds: 1));
+    expect(find.text('Ask Octo…'), findsOneWidget);
+
+    // Muted: no banner.
+    await container
+        .read(databaseProvider)
+        .updateComputer(id, const ComputersCompanion(muted: Value(true)));
+    await _pump(tester);
+    push.deliver(
+      PushMessage(
+        computerId: id,
+        kind: 'todo',
+        title: 'Mom sent you something',
+      ),
+    );
+    await _pump(tester);
+    expect(find.text('Mom sent you something'), findsNothing);
     await _tearDown(tester);
   });
 }

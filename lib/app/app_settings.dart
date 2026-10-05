@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/backend/octo_backend.dart' show BackendException;
+import 'providers.dart';
+
 /// Push kinds (brief §9), each with its own switch.
 enum NotifyKind { help, todo, consentWaiting, taskEnded, pairing }
 
@@ -85,8 +88,16 @@ class AppSettingsController extends Notifier<AppSettings> {
     await _prefs.setBool(_lock, on);
   }
 
+  /// Saves on October too (055), since iOS shows alerts without asking the
+  /// app. If that fails this throws [BackendException] and nothing changes.
   Future<void> setNotify(NotifyKind kind, bool on) async {
-    state = state.copyWith(notify: {...state.notify, kind: on});
+    final next = {...state.notify, kind: on};
+    final off = {
+      for (final k in NotifyKind.values)
+        if (!(next[k] ?? true)) k.name,
+    };
+    await ref.read(backendProvider).setNotifyPreferences(off);
+    state = state.copyWith(notify: next);
     await _prefs.setBool(_notifyKey(kind), on);
   }
 

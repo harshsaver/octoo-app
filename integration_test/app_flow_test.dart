@@ -36,7 +36,7 @@ void main() {
     await tester.pumpWidget(
       buildApp(
         ConfigOk(AppConfig.fake),
-        dirs: AccountDirs(
+        roots: AppRoots(
           support: Directory('${root.path}/support'),
           cache: Directory('${root.path}/cache'),
         ),

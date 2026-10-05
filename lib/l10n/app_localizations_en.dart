@@ -259,6 +259,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusOffline => 'Offline';
 
   @override
+  String get statusNotOcto => 'Not running Octo';
+
+  @override
+  String get previewNotOcto =>
+      'This computer isn\'t running Octo. Remove it and pair with Octo\'s code.';
+
+  @override
   String get askOctoPlaceholder => 'Ask Octo…';
 
   @override
@@ -604,6 +611,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String pairNotOcto(String computer) {
+    return '$computer isn\'t running Octo. That code is for October\'s phone access; scan the code Octo shows instead.';
+  }
+
+  @override
   String pairOffline(String computer) {
     return '$computer went offline. Try again when it\'s back.';
   }
@@ -891,4 +903,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unlockReason => 'Unlock Octo';
+
+  @override
+  String get welcomeLine => 'Help your family\'s computers, from your phone';
+
+  @override
+  String get signInWithOctober => 'Sign in with October';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get sendLink => 'Email me a link';
+
+  @override
+  String linkSent(String email) {
+    return 'Check your email at $email. Tap the link on this phone, or type the code from the email.';
+  }
+
+  @override
+  String get codeLabel => '6-digit code';
+
+  @override
+  String get signInButton => 'Sign in';
+
+  @override
+  String get continueGoogle => 'Continue with Google';
+
+  @override
+  String get continueApple => 'Continue with Apple';
+
+  @override
+  String get orDivider => 'or';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get signOutTitle => 'Sign out of Octo?';
+
+  @override
+  String get signOutBody =>
+      'Your Octos stay on October. This phone forgets their conversations until you sign in again.';
+
+  @override
+  String get signOutUnsent =>
+      'Some things you typed haven\'t reached the computer yet. Signing out deletes them.';
+
+  @override
+  String get signOutRemovals =>
+      'A computer you removed is still being disconnected. Signing out stops that.';
+
+  @override
+  String get pairNotAvailable =>
+      'This version of Octo can\'t connect to a computer yet.';
+
+  @override
+  String get pushOpen => 'Open';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get allowNotifications => 'Allow notifications';
+
+  @override
+  String get planNeeded => 'See plans';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get usePassword => 'Use a password instead';
+
+  @override
+  String get useEmailLink => 'Email me a link instead';
 }

@@ -514,6 +514,18 @@ abstract class AppLocalizations {
   /// **'Offline'**
   String get statusOffline;
 
+  /// No description provided for @statusNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running Octo'**
+  String get statusNotOcto;
+
+  /// No description provided for @previewNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer isn\'t running Octo. Remove it and pair with Octo\'s code.'**
+  String get previewNotOcto;
+
   /// No description provided for @askOctoPlaceholder.
   ///
   /// In en, this message translates to:
@@ -1090,6 +1102,12 @@ abstract class AppLocalizations {
   /// **'Waiting for someone to tap OK on {computer}…'**
   String waitingForOk(String computer);
 
+  /// No description provided for @pairNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'{computer} isn\'t running Octo. That code is for October\'s phone access; scan the code Octo shows instead.'**
+  String pairNotOcto(String computer);
+
   /// No description provided for @pairOffline.
   ///
   /// In en, this message translates to:
@@ -1611,6 +1629,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unlock Octo'**
   String get unlockReason;
+
+  /// No description provided for @welcomeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Help your family\'s computers, from your phone'**
+  String get welcomeLine;
+
+  /// No description provided for @signInWithOctober.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with October'**
+  String get signInWithOctober;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @sendLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a link'**
+  String get sendLink;
+
+  /// No description provided for @linkSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email at {email}. Tap the link on this phone, or type the code from the email.'**
+  String linkSent(String email);
+
+  /// No description provided for @codeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get codeLabel;
+
+  /// No description provided for @signInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInButton;
+
+  /// No description provided for @continueGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueGoogle;
+
+  /// No description provided for @continueApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get continueApple;
+
+  /// No description provided for @orDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get orDivider;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @signOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of Octo?'**
+  String get signOutTitle;
+
+  /// No description provided for @signOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Octos stay on October. This phone forgets their conversations until you sign in again.'**
+  String get signOutBody;
+
+  /// No description provided for @signOutUnsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Some things you typed haven\'t reached the computer yet. Signing out deletes them.'**
+  String get signOutUnsent;
+
+  /// No description provided for @signOutRemovals.
+  ///
+  /// In en, this message translates to:
+  /// **'A computer you removed is still being disconnected. Signing out stops that.'**
+  String get signOutRemovals;
+
+  /// No description provided for @pairNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Octo can\'t connect to a computer yet.'**
+  String get pairNotAvailable;
+
+  /// No description provided for @pushOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get pushOpen;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @allowNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get allowNotifications;
+
+  /// No description provided for @planNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans'**
+  String get planNeeded;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @usePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a password instead'**
+  String get usePassword;
+
+  /// No description provided for @useEmailLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a link instead'**
+  String get useEmailLink;
 }
 
 class _AppLocalizationsDelegate

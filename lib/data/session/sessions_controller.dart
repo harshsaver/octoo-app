@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../transport/octo_link.dart';
 import '../backend/octo_backend.dart';
 import '../db/database.dart';
+import '../outbox.dart';
 import '../screenshot_store.dart';
 import 'computer_session.dart';
 import 'session_data.dart';
@@ -105,6 +106,16 @@ class SessionsController {
     await _cleanUp(computerId);
   }
 
+  /// Whether anything typed here hasn't been confirmed sent (sign-out warns).
+  bool get hasUnsent => _sessions.values.any(
+    (s) => s.data.outbox.values.any(
+      (r) =>
+          r.state == OutboxState.pending ||
+          r.state == OutboxState.attempting ||
+          r.state == OutboxState.uncertain,
+    ),
+  );
+
   /// Whether any removal is still waiting for its unpair (sign-out warns).
   Future<bool> hasPendingRemovals() async =>
       (await db.allComputers()).any((c) => c.tombstone);
@@ -140,6 +151,7 @@ class SessionsController {
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
     _disposed = true;
     for (final s in _subs) {
       await s.cancel();

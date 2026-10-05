@@ -31,6 +31,10 @@ enum LinkState {
 
   /// Her computer can't be reached; the link keeps retrying.
   offline,
+
+  /// Her computer answers but isn't running Octo (for example October
+  /// Desktop's own pairing code was scanned). The link stops retrying.
+  notOcto,
 }
 
 /// [OctoLink.send] was called while the link isn't connected. The message
@@ -51,10 +55,15 @@ class PairedComputer {
     required this.hostId,
     required this.computerName,
     this.person,
-  });
+    String? bind,
+  }) : bind = bind ?? hostId;
 
   final String computerId;
   final String hostId;
+
+  /// This phone's pairing with it (the relay binding); outbox entries are
+  /// bound to it.
+  final String bind;
   final String computerName;
   final String? person;
 }
@@ -107,6 +116,13 @@ enum PairingFailureKind {
 
   /// The QR or typed code isn't one this app can use.
   invalidCode,
+
+  /// This build can't connect to computers yet (real mode before RelayLink).
+  notAvailable,
+
+  /// The computer paired but isn't running Octo (October Desktop's own
+  /// pairing code).
+  notOcto,
 }
 
 /// Pairing ended without pairing. [reason] is her computer's own sentence

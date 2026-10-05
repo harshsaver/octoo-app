@@ -55,10 +55,9 @@ class _AddOctoScreenState extends ConsumerState<AddOctoScreen> {
     final l = AppLocalizations.of(context);
     try {
       final enrollment = await ref.read(enrollmentProvider).resolve(payload);
-      if (enrollment.mode == EnrollmentMode.owner) {
-        await ref
-            .read(backendProvider)
-            .claim(enrollId: enrollment.enrollId, secret: enrollment.secret);
+      final credentials = enrollment.credentials;
+      if (enrollment.mode == EnrollmentMode.owner && credentials != null) {
+        await ref.read(backendProvider).claim(credentials);
       }
       if (!mounted) return;
       unawaited(HapticFeedback.lightImpact());

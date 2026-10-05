@@ -122,7 +122,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
         ComputersCompanion.insert(
           id: paired.computerId,
           hostId: Value(paired.hostId),
-          bind: Value(paired.hostId),
+          bind: Value(paired.bind),
           computerName: computerName,
           person: person,
           language: Value(_language),
@@ -136,17 +136,45 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
       );
       final session = await ref
           .read(sessionsControllerProvider)
-          .ensure(paired.computerId, bind: paired.hostId);
+          .ensure(paired.computerId, bind: paired.bind);
       await session.addNote('welcome', l.welcome(helper, person));
       // Her computer learns the names through the profile sync: it is owed
       // (generation 1) and runs now or when she's back.
       unawaited(ref.read(profileSyncProvider).sync(session.computerId));
+      if (count == 0 && mounted) await _askForNotifications(person);
       if (mounted) Navigator.pop(context, paired.computerId);
     } on BackendException catch (e) {
       setState(() {
         _step = _Step.look;
         _error = l.setupFailed(e.message);
       });
+    }
+  }
+
+  /// The first time an Octo is added, with one line of why (brief §5.1).
+  Future<void> _askForNotifications(String person) async {
+    final push = ref.read(pushServiceProvider);
+    if (!push.available) return;
+    final l = AppLocalizations.of(context);
+    final allow = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(l.notifications),
+        content: Text(l.notificationsWhy(person)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: Text(l.notNow),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(l.allowNotifications),
+          ),
+        ],
+      ),
+    );
+    if (allow == true && await push.requestPermission()) {
+      await ref.read(pushRegistrarProvider).register();
     }
   }
 
@@ -242,8 +270,10 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
           PairingFailureKind.reportedByComputer => reason ?? '',
           PairingFailureKind.codeMismatch => l.mismatchExplain,
           PairingFailureKind.offline => l.pairOffline(computer),
+          PairingFailureKind.notOcto => l.pairNotOcto(computer),
           PairingFailureKind.timedOut => l.pairTimedOut(computer),
           PairingFailureKind.invalidCode => l.codeNotRecognised,
+          PairingFailureKind.notAvailable => l.pairNotAvailable,
         }),
         const SizedBox(height: OctoSpace.xl),
         FilledButton(

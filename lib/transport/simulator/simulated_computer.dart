@@ -71,6 +71,64 @@ class PendingConsent {
   Timer? _expiry;
 }
 
+/// Does the real work of tasks and captures the real screen, in place of
+/// the simulator's scripted steps. The test Octo (tool/test_octo) plugs in
+/// one backed by an AI and the laptop it runs on; without one, everything
+/// stays simulated.
+abstract class TaskWorker {
+  /// Works on [task] (already approved). Reports progress through [step];
+  /// [stopped] turns true if the helper stops the task.
+  Future<WorkOutcome> work(
+    Task task, {
+    required void Function(WorkStep step) step,
+    required bool Function() stopped,
+  });
+
+  /// Her screen now, or null when it can't be captured.
+  Future<WorkScreen?> screen();
+}
+
+class WorkStep {
+  const WorkStep({required this.did, this.say, this.ok = true, this.error});
+
+  /// What Octo is doing now ("Looking at the Wi-Fi…").
+  final String? say;
+
+  /// What it did ("Checked the Wi-Fi connection").
+  final String did;
+  final bool ok;
+  final String? error;
+}
+
+class WorkOutcome {
+  const WorkOutcome({
+    required this.status,
+    required this.result,
+    this.resultForHer,
+    this.screenshot,
+  });
+
+  /// `done`, `gaveUp`, `blocked` or `failed`.
+  final String status;
+
+  /// For the helper.
+  final String result;
+
+  /// Shown on her screen.
+  final String? resultForHer;
+
+  /// A `data:image/…;base64,` URI.
+  final String? screenshot;
+}
+
+class WorkScreen {
+  const WorkScreen({required this.dataUri, this.app, this.window});
+
+  final String dataUri;
+  final String? app;
+  final String? window;
+}
+
 class SimHelper {
   const SimHelper({required this.id, required this.name, required this.device});
 
@@ -106,6 +164,9 @@ class SimulatedComputer {
   final Random _random;
 
   Policy policy = const Policy();
+
+  /// Real work instead of scripted steps (see [TaskWorker]).
+  TaskWorker? worker;
   final Map<String, SimHelper> helpers = {};
   final Map<String, Task> tasks = {};
   final Map<String, Todo> todos = {};
@@ -564,6 +625,8 @@ class SimulatedComputer {
   }
 
   void _run(Task task) {
+    final w = worker;
+    if (w != null) return _runWith(w, task);
     final sim = simJobById(task.job ?? '') ?? generalJob;
     final limit = hardLimitFor(task.text, person);
     var current = _emitTask(
@@ -610,6 +673,40 @@ class SimulatedComputer {
     }
 
     _taskTimers[current.id] = Timer(settings.stepInterval, next);
+  }
+
+  void _runWith(TaskWorker w, Task task) {
+    final id = task.id;
+    _emitTask(task.copyWith(status: 'running', startedAt: _now(), say: 'Working on it…'));
+    bool stopped() => _disposed || tasks[id]?.phase != TaskPhase.running;
+    var n = 0;
+    void step(WorkStep s) {
+      if (stopped()) return;
+      final current = tasks[id]!;
+      final steps = [
+        ...current.steps,
+        TaskStep(n: ++n, at: _now(), say: s.say, did: s.did, ok: s.ok, error: s.error),
+      ];
+      _addLog('step', 'Octo', s.did, taskId: id);
+      _emitTask(current.copyWith(steps: steps, say: s.say));
+    }
+
+    w.work(tasks[id]!, step: step, stopped: stopped).then(
+      (o) {
+        if (stopped()) return;
+        _end(
+          tasks[id]!,
+          o.status,
+          o.result,
+          resultForHer: o.resultForHer,
+          screenshot: o.screenshot == null ? null : WireScreenshot.fromWire(o.screenshot!),
+        );
+      },
+      onError: (Object e) {
+        if (stopped()) return;
+        _end(tasks[id]!, 'failed', 'Octo ran into a problem: $e');
+      },
+    );
   }
 
   void _end(
@@ -726,6 +823,25 @@ class SimulatedComputer {
     ) {
       if (ok == true) {
         _addLog('screen', person, '$person showed her screen');
+        final w = worker;
+        if (w != null) {
+          w.screen().then(
+            (shot) => _emit(
+              shot == null
+                  ? const ScreenMessage(ok: false, reason: "Octo couldn't capture the screen.")
+                  : ScreenMessage(
+                      ok: true,
+                      at: _now(),
+                      screenshot: WireScreenshot.fromWire(shot.dataUri),
+                      app: shot.app,
+                      window: shot.window,
+                    ),
+            ),
+            onError: (Object _) =>
+                _emit(const ScreenMessage(ok: false, reason: "Octo couldn't capture the screen.")),
+          );
+          return;
+        }
         _emit(
           ScreenMessage(
             ok: true,
@@ -883,6 +999,9 @@ class SimulatedComputer {
       ),
     );
   }
+
+  /// Puts a line on her screen (the test Octo's AI uses it).
+  void show(String line) => _show(line);
 
   void _show(String line) {
     momScreen.add(line);

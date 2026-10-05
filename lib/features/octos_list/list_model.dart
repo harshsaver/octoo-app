@@ -105,6 +105,8 @@ OctoRowModel buildRowModel({
         )
       : waiting != null
       ? (PreviewKind.waiting, l.previewWaiting(person), OctoMood.waiting)
+      : link == LinkState.notOcto
+      ? (PreviewKind.offline, l.previewNotOcto, OctoMood.sleepy)
       : offline
       ? (
           PreviewKind.offline,

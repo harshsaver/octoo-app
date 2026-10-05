@@ -97,6 +97,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
       LinkState.connected when running => (l.statusWorking, colors.working),
       LinkState.connected => (l.statusOnline, colors.secondaryLabel),
       LinkState.connecting => (l.statusConnecting, colors.secondaryLabel),
+      LinkState.notOcto => (l.statusNotOcto, colors.needsYou),
       _ when data?.lastSeenAt != null => (
         l.statusLastSeen(agoText(l, data!.lastSeenAt!, now)),
         colors.secondaryLabel,

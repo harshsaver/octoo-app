@@ -199,6 +199,8 @@
     }
   },
   "statusOffline": "Offline",
+  "statusNotOcto": "Not running Octo",
+  "previewNotOcto": "This computer isn't running Octo. Remove it and pair with Octo's code.",
   "askOctoPlaceholder": "Ask Octo…",
   "tellPlaceholder": "Tell {person}…",
   "@tellPlaceholder": {
@@ -492,6 +494,14 @@
       }
     }
   },
+  "pairNotOcto": "{computer} isn't running Octo. That code is for October's phone access; scan the code Octo shows instead.",
+  "@pairNotOcto": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
   "pairOffline": "{computer} went offline. Try again when it's back.",
   "@pairOffline": {
     "placeholders": {
@@ -662,5 +672,35 @@
   "showSimulator": "Show simulator controls",
   "lockTitle": "Octo is locked",
   "unlock": "Unlock",
-  "unlockReason": "Unlock Octo"
+  "unlockReason": "Unlock Octo",
+  "welcomeLine": "Help your family's computers, from your phone",
+  "signInWithOctober": "Sign in with October",
+  "emailLabel": "Email",
+  "sendLink": "Email me a link",
+  "linkSent": "Check your email at {email}. Tap the link on this phone, or type the code from the email.",
+  "@linkSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "codeLabel": "6-digit code",
+  "signInButton": "Sign in",
+  "continueGoogle": "Continue with Google",
+  "continueApple": "Continue with Apple",
+  "orDivider": "or",
+  "signOut": "Sign out",
+  "signOutTitle": "Sign out of Octo?",
+  "signOutBody": "Your Octos stay on October. This phone forgets their conversations until you sign in again.",
+  "signOutUnsent": "Some things you typed haven't reached the computer yet. Signing out deletes them.",
+  "signOutRemovals": "A computer you removed is still being disconnected. Signing out stops that.",
+  "pairNotAvailable": "This version of Octo can't connect to a computer yet.",
+  "pushOpen": "Open",
+  "notNow": "Not now",
+  "allowNotifications": "Allow notifications",
+  "planNeeded": "See plans",
+  "passwordLabel": "Password",
+  "usePassword": "Use a password instead",
+  "useEmailLink": "Email me a link instead"
 }
