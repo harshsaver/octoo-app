@@ -199,6 +199,8 @@
     }
   },
   "statusOffline": "Offline",
+  "statusNotOcto": "Not running Octo",
+  "previewNotOcto": "This computer isn't running Octo. Remove it and pair with Octo's code.",
   "askOctoPlaceholder": "Ask Octo…",
   "tellPlaceholder": "Tell {person}…",
   "@tellPlaceholder": {
@@ -486,6 +488,14 @@
   "mismatchExplain": "The keys didn't match, so we stopped. Someone else may be trying to add this computer.",
   "waitingForOk": "Waiting for someone to tap OK on {computer}…",
   "@waitingForOk": {
+    "placeholders": {
+      "computer": {
+        "type": "String"
+      }
+    }
+  },
+  "pairNotOcto": "{computer} isn't running Octo. That code is for October's phone access; scan the code Octo shows instead.",
+  "@pairNotOcto": {
     "placeholders": {
       "computer": {
         "type": "String"

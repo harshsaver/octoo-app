@@ -17,6 +17,13 @@ const familyTopic = 'octo.family';
 /// The request method for family messages, phone → computer.
 const familyMethod = 'octo.message';
 
+/// The first request on every connection; only an Octo computer answers it
+/// with `{"ok": true, "result": {"octo": 1}}`.
+const helloMethod = 'octo.hello';
+
+/// The family protocol version this app speaks.
+const familyProtocol = 1;
+
 /// A computer paired over the relay without the Octo backend has this id.
 String relayComputerId(String hostId) => 'rly_${hostId.replaceAll('-', '')}';
 
@@ -57,6 +64,7 @@ class RelayLink implements OctoLink {
     this.requestTimeout = const Duration(seconds: 20),
     this.credentialTimeout = const Duration(minutes: 5),
     this.retryDelay = relayRetryDelay,
+    this.stableAfter = const Duration(seconds: 30),
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
@@ -72,6 +80,9 @@ class RelayLink implements OctoLink {
   final Duration requestTimeout;
   final Duration credentialTimeout;
   final Duration Function(int attempt) retryDelay;
+
+  /// A connection that lasted this long resets the backoff when it drops.
+  final Duration stableAfter;
   final DateTime Function() _now;
 
   final Map<String, _Live> _live = {};
@@ -248,6 +259,19 @@ class RelayLink implements OctoLink {
       } finally {
         await frames.cancel();
       }
+      c.close();
+      // Pairing used October's own protocol, which any October computer
+      // speaks. Before calling it paired, check this one runs Octo.
+      try {
+        final probe = await _openActive(computerId, binding);
+        probe.close();
+      } on NotOctoException {
+        await _selfRevoke(binding);
+        return emit(failed(PairingFailureKind.notOcto, isFinal: true));
+      } on Object {
+        // Not reachable right now: it'll be checked on every connection.
+      }
+      if (cancelled()) return;
       paired = true;
       emit(
         PairingPaired(
@@ -267,7 +291,7 @@ class RelayLink implements OctoLink {
     late final StreamController<LinkState> out;
     var stopped = false;
     Timer? retry;
-    DeviceConnection? current;
+    _Live? current;
     var attempt = 0;
 
     void state(LinkState s) {
@@ -284,46 +308,35 @@ class RelayLink implements OctoLink {
           state(LinkState.offline);
           return; // not paired on this phone: nothing to retry
         }
-        final sign = await SigningKey.fromSeed(b64urlDecode(binding.deviceSignSeed));
-        final ticket = await control.post(
-          'mobile-relay-ticket',
-          {'role': 'device', 'hostId': binding.hostId, 'bind': binding.bind, 'key': await _staticPub(binding)},
-          signer: sign,
-          operation: 'ticket-device',
-        );
-        if (stopped) return;
-        final c = current = await DeviceConnection.open(
-          relay: relay,
-          hostId: binding.hostId,
-          bind: binding.bind,
-          ticket: ticket['ticket']! as String,
-          deviceStatic: await NoiseKeyPair.fromPrivateKey(b64urlDecode(binding.deviceStaticKey)),
-          hostStatic: b64urlDecode(binding.hostStatic),
-          connector: connector,
-        );
-        if (stopped) return c.close();
-        await c.send(FrameKind.auth, utf8.encode(binding.credential!));
-        await c.sendJson(FrameKind.sub, {
-          'cursor': null,
-          'topics': [familyTopic],
-          'terminals': const <String>[],
-        });
-        final live = _Live(c, binding.bind);
+        final live = current = await _openActive(computerId, binding);
+        if (stopped) return live.close();
         _live[computerId] = live;
-        final frames = c.frames.listen((f) => _onFrame(computerId, live, f));
-        attempt = 0;
+        final since = _now();
         state(LinkState.connected);
-        final code = await c.done;
-        await frames.cancel();
+        final code = await live.connection.done;
         if (_live[computerId] == live) _live.remove(computerId);
-        live.fail();
+        live.close();
         if (stopped) return;
-        state(LinkState.offline);
         // The relay or her computer says this phone may not reconnect.
         if (code == RelayClose.revoked || code == RelayClose.authenticationFailed || code == RelayClose.replaced) {
+          state(LinkState.offline);
           return;
         }
+        // A connection that lasted is a routine drop (the relay renews
+        // leases every few minutes): show "connecting", not "offline", and
+        // start the backoff over. One that died at once counts as a failure.
+        if (_now().difference(since) >= stableAfter) {
+          attempt = 0;
+          state(LinkState.connecting);
+        } else {
+          state(LinkState.offline);
+        }
         if (code == RelayClose.rateLimited) wait = const Duration(seconds: 60);
+      } on NotOctoException {
+        // Her computer answers but isn't running Octo (October Desktop's own
+        // pairing code was scanned). Retrying won't change that.
+        state(LinkState.notOcto);
+        return;
       } on ControlPlaneException catch (e) {
         state(LinkState.offline);
         if (e.code == 'plan_required' || e.code == 'HOST_INACTIVE' || e.code == 'BINDING_INACTIVE') {
@@ -350,13 +363,84 @@ class RelayLink implements OctoLink {
     return out.stream;
   }
 
+  /// Ticket → socket → Noise → `auth` → `octo.hello` → `sub`. Throws
+  /// [NotOctoException] when her computer answers but doesn't speak Octo.
+  Future<_Live> _openActive(String computerId, RelayBinding binding) async {
+    final sign = await SigningKey.fromSeed(b64urlDecode(binding.deviceSignSeed));
+    final ticket = await control.post(
+      'mobile-relay-ticket',
+      {'role': 'device', 'hostId': binding.hostId, 'bind': binding.bind, 'key': await _staticPub(binding)},
+      signer: sign,
+      operation: 'ticket-device',
+    );
+    final c = await DeviceConnection.open(
+      relay: relay,
+      hostId: binding.hostId,
+      bind: binding.bind,
+      ticket: ticket['ticket']! as String,
+      deviceStatic: await NoiseKeyPair.fromPrivateKey(b64urlDecode(binding.deviceStaticKey)),
+      hostStatic: b64urlDecode(binding.hostStatic),
+      connector: connector,
+    );
+    final live = _Live(c, binding.bind);
+    live.frames = c.frames.listen((f) => _onFrame(computerId, live, f));
+    try {
+      await c.send(FrameKind.auth, utf8.encode(binding.credential!));
+      // Before subscribing: October Desktop's core refuses the Octo topic
+      // and would end the session before the answer arrived.
+      final hello = await _request(live, helloMethod, const {'app': 'octo-family', 'protocol': familyProtocol});
+      final result = hello.body['result'];
+      if (!hello.ok || result is! Map<String, Object?> || result['octo'] != familyProtocol) {
+        throw const NotOctoException();
+      }
+      await c.sendJson(FrameKind.sub, {
+        'cursor': null,
+        'topics': [familyTopic],
+        'terminals': const <String>[],
+      });
+      return live;
+    } on Object {
+      live.close();
+      rethrow;
+    }
+  }
+
+  /// One `req`; completes with the computer's answer. October's convention:
+  /// success is a 2xx status *and* `{"ok": true}` in the body.
+  Future<_Reply> _request(_Live live, String method, Map<String, Object?> payload) async {
+    final envelope = {
+      'apiVersion': 2,
+      'requestId': uuidV4(),
+      'deadlineAt': _now().add(requestTimeout).millisecondsSinceEpoch,
+      'principal': {'kind': 'remote', 'id': live.bind},
+      'method': method,
+      'payload': payload,
+    };
+    final id = live.connection.newMessageId();
+    final reply = live.pending[id] = Completer<_Reply>();
+    try {
+      await live.connection.sendWithId(FrameKind.req, utf8.encode(jsonEncode(envelope)), id);
+    } on Object {
+      live.pending.remove(id);
+      rethrow;
+    }
+    return reply.future.timeout(
+      requestTimeout,
+      onTimeout: () {
+        live.pending.remove(id);
+        throw TimeoutException('her computer did not answer');
+      },
+    );
+  }
+
   void _onFrame(String computerId, _Live live, AssembledFrame f) {
     switch (f.kind) {
       case FrameKind.res:
         final pending = live.pending.remove(f.messageId);
         if (pending == null) return;
         try {
-          pending.complete(decodeResponse(f.data).status);
+          final r = decodeResponse(f.data);
+          pending.complete(_Reply(r.status, _json(r.body)));
         } on FrameViolation catch (e) {
           pending.completeError(e);
         }
@@ -383,30 +467,12 @@ class RelayLink implements OctoLink {
   Future<void> send(String computerId, Map<String, Object?> message) async {
     final live = _live[computerId];
     if (live == null || !live.connection.isOpen) throw LinkUnavailableException(computerId);
-    final envelope = {
-      'apiVersion': 2,
-      'requestId': uuidV4(),
-      'deadlineAt': _now().add(requestTimeout).millisecondsSinceEpoch,
-      'principal': {'kind': 'remote', 'id': live.bind},
-      'method': familyMethod,
-      'payload': message,
-    };
-    final id = live.connection.newMessageId();
-    final reply = live.pending[id] = Completer<int>();
-    try {
-      await live.connection.sendWithId(FrameKind.req, utf8.encode(jsonEncode(envelope)), id);
-    } on Object {
-      live.pending.remove(id);
-      rethrow;
+    final reply = await _request(live, familyMethod, message);
+    if (!reply.ok) {
+      final error = reply.body['error'];
+      final code = error is Map<String, Object?> ? error['code'] : null;
+      throw StateError('her computer refused the message (${reply.status}${code == null ? '' : ' $code'})');
     }
-    final status = await reply.future.timeout(
-      requestTimeout,
-      onTimeout: () {
-        live.pending.remove(id);
-        throw TimeoutException('her computer did not answer');
-      },
-    );
-    if (status < 200 || status >= 300) throw StateError('her computer refused the message ($status)');
   }
 
   @override
@@ -417,9 +483,15 @@ class RelayLink implements OctoLink {
 
   @override
   Future<void> unpair(String computerId) async {
-    _live.remove(computerId)?.connection.close();
+    _live.remove(computerId)?.close();
     final binding = await _binding(computerId);
     if (binding == null) return;
+    await _selfRevoke(binding);
+    await vault.delete(binding.userId, computerId);
+  }
+
+  /// Best effort: her computer may already have forgotten this phone.
+  Future<void> _selfRevoke(RelayBinding binding) async {
     try {
       await control.post(
         'mobile-device-revoke',
@@ -428,15 +500,13 @@ class RelayLink implements OctoLink {
         operation: 'device-self-revoke',
       );
     } on ControlPlaneException {
-      // Best effort: her computer already forgot this phone (`leave`).
+      // ignored
     }
-    await vault.delete(binding.userId, computerId);
   }
 
   void dispose() {
     for (final live in _live.values) {
-      live.connection.close();
-      live.fail();
+      live.close();
     }
     _live.clear();
     for (final sink in _messages.values) {
@@ -469,14 +539,32 @@ class _Live {
 
   final DeviceConnection connection;
   final String bind;
-  final Map<int, Completer<int>> pending = {};
+  final Map<int, Completer<_Reply>> pending = {};
+  StreamSubscription<AssembledFrame>? frames;
 
-  void fail() {
+  void close() {
+    unawaited(frames?.cancel());
+    connection.close();
     for (final p in pending.values) {
       p.completeError(StateError('the connection closed'));
     }
     pending.clear();
   }
+}
+
+class _Reply {
+  const _Reply(this.status, this.body);
+
+  final int status;
+  final Map<String, Object?> body;
+
+  bool get ok => status >= 200 && status < 300 && body['ok'] == true;
+}
+
+/// Her computer answered, but not as Octo: it's October Desktop (or another
+/// October host) without Octo.
+class NotOctoException implements Exception {
+  const NotOctoException();
 }
 
 class _PairingClosed implements Exception {

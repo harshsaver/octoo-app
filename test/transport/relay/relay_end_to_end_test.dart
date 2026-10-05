@@ -172,10 +172,48 @@ class FakeOctober implements HostCloud {
   }
 }
 
+/// The test Octo that can pretend to be October Desktop without Octo: its
+/// core answers every request `{"ok": false}` and refuses the Octo topic by
+/// ending the session.
+class SwitchableOcto extends TestOcto {
+  SwitchableOcto({
+    required super.cloud,
+    required super.computer,
+    required super.state,
+    required super.approve,
+    required super.say,
+  });
+
+  bool octoberOnly = false;
+  bool dropAfterSubscribe = false;
+
+  @override
+  Future<({int status, Map<String, Object?> body})> request(
+    HostSession session,
+    Map<String, Object?> envelope,
+  ) async {
+    if (!octoberOnly) return super.request(session, envelope);
+    return (
+      status: 200,
+      body: {
+        'apiVersion': 2,
+        'requestId': envelope['requestId'],
+        'ok': false,
+        'error': {'code': 'INVALID_ARGUMENT', 'message': 'unknown method'},
+      },
+    );
+  }
+
+  @override
+  void subscribed(HostSession session) {
+    if (octoberOnly || dropAfterSubscribe) session.close();
+  }
+}
+
 void main() {
   late FakeRelay relay;
   late FakeOctober october;
-  late TestOcto octo;
+  late SwitchableOcto octo;
   late SimulatedComputer computer;
   late RelayLink link;
   late List<String> hostLog;
@@ -194,7 +232,7 @@ void main() {
       settings: SimulatorSettings(autopilot: false),
     );
     hostLog = [];
-    octo = TestOcto(
+    octo = SwitchableOcto(
       cloud: october,
       computer: computer,
       state: state,
@@ -223,6 +261,22 @@ void main() {
       retryDelay: (_) => const Duration(milliseconds: 200),
     );
   });
+
+  RelayLink newLink({Duration stableAfter = const Duration(seconds: 30), List<int>? attempts}) => RelayLink(
+    control: ControlPlane(
+      authOrigin: Uri.parse('https://auth.test'),
+      accessToken: () async => october.jwt,
+      client: MockClient(october.handle),
+    ),
+    vault: (link.vault as MemoryVault),
+    relay: relay.uri,
+    platform: 'android',
+    stableAfter: stableAfter,
+    retryDelay: (attempt) {
+      attempts?.add(attempt);
+      return const Duration(milliseconds: 150);
+    },
+  );
 
   tearDown(() async {
     link.dispose();
@@ -318,6 +372,55 @@ void main() {
   test("the helper says the codes don't match", () async {
     final progress = await pair(match: false);
     expect((progress.last as PairingFailed).kind, PairingFailureKind.codeMismatch);
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test("October Desktop's own code pairs at October's level but is refused: not Octo", () async {
+    octo.octoberOnly = true;
+    final progress = await pair();
+    final last = progress.last as PairingFailed;
+    expect(last.kind, PairingFailureKind.notOcto);
+    expect(last.isFinal, isTrue);
+    expect(october.signedOps, contains('device-self-revoke'));
+    expect((link.vault as MemoryVault).bindings, isEmpty);
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('an already-paired computer that is not Octo: one notOcto, no reconnect loop', () async {
+    final paired = ((await pair()).last as PairingPaired).computer;
+    octo.octoberOnly = true;
+    final states = <LinkState>[];
+    final sub = link.connect(paired.computerId).listen(states.add);
+    await _until(() => states.contains(LinkState.notOcto), what: '$states');
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    expect(states, [LinkState.connecting, LinkState.notOcto]);
+    await sub.cancel();
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('a connection that dies at once backs off instead of flickering', () async {
+    final paired = ((await pair()).last as PairingPaired).computer;
+    octo.dropAfterSubscribe = true;
+    final attempts = <int>[];
+    final flaky = newLink(attempts: attempts);
+    final states = <LinkState>[];
+    final sub = flaky.connect(paired.computerId).listen(states.add);
+    await _until(() => attempts.length >= 3, timeout: const Duration(seconds: 10), what: '$attempts $states');
+    expect(attempts.take(3), [0, 1, 2]);
+    await sub.cancel();
+    flaky.dispose();
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('a routine drop after a stable connection shows connecting, not offline', () async {
+    final paired = ((await pair()).last as PairingPaired).computer;
+    final steady = newLink(stableAfter: const Duration(milliseconds: 100));
+    final states = <LinkState>[];
+    final sub = steady.connect(paired.computerId).listen(states.add);
+    await _until(() => states.contains(LinkState.connected));
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    states.clear();
+    await relay.dropHost(october.hostId); // the relay renews the host's lease
+    await _until(() => states.contains(LinkState.connected), timeout: const Duration(seconds: 10), what: '$states');
+    expect(states, isNot(contains(LinkState.offline)));
+    await sub.cancel();
+    steady.dispose();
   }, timeout: const Timeout(Duration(minutes: 1)));
 
   test('a link that is not an October pairing code', () async {

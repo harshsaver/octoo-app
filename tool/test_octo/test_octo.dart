@@ -10,7 +10,7 @@ import 'dart:io';
 
 import 'package:octo_family/transport/relay/encoding.dart';
 import 'package:octo_family/transport/relay/frames.dart';
-import 'package:octo_family/transport/relay/relay_link.dart' show familyMethod, familyTopic;
+import 'package:octo_family/transport/relay/relay_link.dart' show familyMethod, familyProtocol, familyTopic, helloMethod;
 import 'package:octo_family/transport/relay/relay_protocol.dart';
 import 'package:octo_family/transport/simulator/simulated_computer.dart';
 
@@ -183,17 +183,40 @@ class TestOcto implements HostDelegate {
   }
 
   @override
-  Future<int> request(HostSession session, Map<String, Object?> envelope) async {
-    if (envelope['method'] != familyMethod) return 404;
+  Future<({int status, Map<String, Object?> body})> request(
+    HostSession session,
+    Map<String, Object?> envelope,
+  ) async {
+    ({int status, Map<String, Object?> body}) ok([Map<String, Object?> result = const {}]) => (
+      status: 200,
+      body: {'apiVersion': 2, 'requestId': envelope['requestId'], 'ok': true, 'result': result},
+    );
+    ({int status, Map<String, Object?> body}) error(int status, String code) => (
+      status: status,
+      body: {
+        'apiVersion': 2,
+        'requestId': envelope['requestId'],
+        'ok': false,
+        'error': {'code': code, 'message': code},
+      },
+    );
     final payload = envelope['payload'];
-    if (payload is! Map<String, Object?>) return 400;
-    say('← ${payload['type']}');
-    computer.receive(payload, from: session.bind);
-    if (payload['type'] == 'leave') {
-      // After the `res` for this request has gone out.
-      unawaited(Future<void>.delayed(const Duration(seconds: 1), () => _forget(session.bind, notify: false)));
+    switch (envelope['method']) {
+      case helloMethod:
+        return ok({'octo': familyProtocol, 'computer': computer.computerName, 'person': computer.person});
+      case familyMethod when payload is Map<String, Object?>:
+        say('← ${payload['type']}');
+        computer.receive(payload, from: session.bind);
+        if (payload['type'] == 'leave') {
+          // After the `res` for this request has gone out.
+          unawaited(Future<void>.delayed(const Duration(seconds: 1), () => _forget(session.bind, notify: false)));
+        }
+        return ok();
+      case familyMethod:
+        return error(400, 'INVALID_ARGUMENT');
+      default:
+        return error(404, 'NOT_FOUND');
     }
-    return 200;
   }
 
   @override

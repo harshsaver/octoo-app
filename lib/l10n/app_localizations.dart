@@ -514,6 +514,18 @@ abstract class AppLocalizations {
   /// **'Offline'**
   String get statusOffline;
 
+  /// No description provided for @statusNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running Octo'**
+  String get statusNotOcto;
+
+  /// No description provided for @previewNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer isn\'t running Octo. Remove it and pair with Octo\'s code.'**
+  String get previewNotOcto;
+
   /// No description provided for @askOctoPlaceholder.
   ///
   /// In en, this message translates to:
@@ -1089,6 +1101,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for someone to tap OK on {computer}…'**
   String waitingForOk(String computer);
+
+  /// No description provided for @pairNotOcto.
+  ///
+  /// In en, this message translates to:
+  /// **'{computer} isn\'t running Octo. That code is for October\'s phone access; scan the code Octo shows instead.'**
+  String pairNotOcto(String computer);
 
   /// No description provided for @pairOffline.
   ///

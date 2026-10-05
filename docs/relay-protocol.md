@@ -35,7 +35,7 @@ The phone's computer id for such a pairing is `rly_<hostId without dashes>`
 ## After pairing
 
 Each connection: ticket → socket → Noise → the phone sends `auth` (the
-credential, UTF-8), then `sub`:
+credential, UTF-8), then an **`octo.hello`** request (below), then `sub`:
 
 ```json
 {"cursor": null, "topics": ["octo.family"], "terminals": []}
@@ -57,9 +57,27 @@ Every family message is one `req` frame holding a `CoreRequestEnvelope`:
 ```
 
 The computer answers each with a `res` frame (same message id),
-`[status u16][serverTimeMs u64][JSON]`. **200 means "received"**, nothing
-more; the family reply (`result`, `status`, …) comes separately as an
-event. The phone treats no `res` within 20 s as "maybe sent" (the outbox's
+`[status u16][serverTimeMs u64][JSON]`, the JSON being October's
+`CoreResponseEnvelope`: `{"apiVersion": 2, "requestId", "ok": true, "result": {}}`
+or `{"ok": false, "error": {"code", "message"}}`. **Success is a 2xx status
+and `"ok": true`** (October's core answers most errors with status 200 and
+`"ok": false`). Success only means "received"; the family reply (`result`,
+`status`, …) comes separately as an event.
+
+### `octo.hello`
+
+The first request on every connection, sent before `sub`:
+
+```json
+{"method": "octo.hello", "payload": {"app": "octo-family", "protocol": 1}}
+```
+
+An Octo computer answers `{"ok": true, "result": {"octo": 1, "computer": "Mom's laptop", "person": "Mom"}}`.
+Anything else means the computer is October Desktop without Octo (its core
+answers `"ok": false`, and ends the session when the phone subscribes to
+`octo.family`). The phone then says "Not running Octo" and stops retrying.
+The phone also checks this right after pairing, so October Desktop's own
+pairing code can't be used to add an Octo by mistake. The phone treats no `res` within 20 s as "maybe sent" (the outbox's
 *uncertain*), and a send while disconnected as "not sent".
 
 `principal.id` is overwritten by the host with the binding id, as October

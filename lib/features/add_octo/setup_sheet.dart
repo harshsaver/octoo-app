@@ -270,6 +270,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
           PairingFailureKind.reportedByComputer => reason ?? '',
           PairingFailureKind.codeMismatch => l.mismatchExplain,
           PairingFailureKind.offline => l.pairOffline(computer),
+          PairingFailureKind.notOcto => l.pairNotOcto(computer),
           PairingFailureKind.timedOut => l.pairTimedOut(computer),
           PairingFailureKind.invalidCode => l.codeNotRecognised,
           PairingFailureKind.notAvailable => l.pairNotAvailable,

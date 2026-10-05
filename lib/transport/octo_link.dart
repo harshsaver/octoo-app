@@ -31,6 +31,10 @@ enum LinkState {
 
   /// Her computer can't be reached; the link keeps retrying.
   offline,
+
+  /// Her computer answers but isn't running Octo (for example October
+  /// Desktop's own pairing code was scanned). The link stops retrying.
+  notOcto,
 }
 
 /// [OctoLink.send] was called while the link isn't connected. The message
@@ -115,6 +119,10 @@ enum PairingFailureKind {
 
   /// This build can't connect to computers yet (real mode before RelayLink).
   notAvailable,
+
+  /// The computer paired but isn't running Octo (October Desktop's own
+  /// pairing code).
+  notOcto,
 }
 
 /// Pairing ended without pairing. [reason] is her computer's own sentence

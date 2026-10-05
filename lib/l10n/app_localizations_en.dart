@@ -259,6 +259,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusOffline => 'Offline';
 
   @override
+  String get statusNotOcto => 'Not running Octo';
+
+  @override
+  String get previewNotOcto =>
+      'This computer isn\'t running Octo. Remove it and pair with Octo\'s code.';
+
+  @override
   String get askOctoPlaceholder => 'Ask Octo…';
 
   @override
@@ -601,6 +608,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String waitingForOk(String computer) {
     return 'Waiting for someone to tap OK on $computer…';
+  }
+
+  @override
+  String pairNotOcto(String computer) {
+    return '$computer isn\'t running Octo. That code is for October\'s phone access; scan the code Octo shows instead.';
   }
 
   @override

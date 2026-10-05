@@ -50,8 +50,9 @@ abstract class HostDelegate {
   /// Active stage: the phone's first frame. False closes the session.
   bool authenticate(HostSession session, String credential);
 
-  /// Active stage: a `req`; returns the HTTP-like status for its `res`.
-  Future<int> request(HostSession session, Map<String, Object?> envelope);
+  /// Active stage: a `req`; returns the status and JSON body for its `res`
+  /// (October's `CoreResponseEnvelope`: `{apiVersion, requestId, ok, result | error}`).
+  Future<({int status, Map<String, Object?> body})> request(HostSession session, Map<String, Object?> envelope);
 
   /// Active stage: the phone subscribed; events may flow.
   void subscribed(HostSession session);
@@ -155,15 +156,27 @@ class HostSession {
     switch (f.kind) {
       case FrameKind.req:
         final envelope = _json(f.data);
-        int status;
+        ({int status, Map<String, Object?> body}) reply;
         try {
-          status = await _host.delegate.request(this, envelope);
+          reply = await _host.delegate.request(this, envelope);
         } on Object catch (e) {
           _host.delegate.log('request failed: $e');
-          status = 500;
+          reply = (
+            status: 500,
+            body: {
+              'apiVersion': 2,
+              'requestId': envelope['requestId'],
+              'ok': false,
+              'error': {'code': 'INTERNAL', 'message': '$e'},
+            },
+          );
         }
-        final body = utf8.encode(jsonEncode({'ok': status == 200}));
-        await _send(FrameKind.res, encodeResponse(status, DateTime.now().millisecondsSinceEpoch, body), f.messageId);
+        final body = utf8.encode(jsonEncode(reply.body));
+        await _send(
+          FrameKind.res,
+          encodeResponse(reply.status, DateTime.now().millisecondsSinceEpoch, body),
+          f.messageId,
+        );
       case FrameKind.sub:
         subscribed = true;
         _host.delegate.subscribed(this);
