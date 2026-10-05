@@ -18,6 +18,9 @@ abstract final class ConfigKeys {
 
   /// `firebase` turns push on (needs the Firebase config files).
   static const push = 'OCTO_PUSH';
+
+  /// October's relay. Defaults to `https://relay.afteroctober.xyz`.
+  static const relayUrl = 'OCTO_RELAY_URL';
 }
 
 class AppConfig {
@@ -28,9 +31,11 @@ class AppConfig {
     this.supabaseAnonKey,
     this.authRedirect = defaultAuthRedirect,
     this.pushEnabled = false,
+    this.relayUrl = defaultRelayUrl,
   });
 
   static const defaultAuthRedirect = 'octo://auth-callback';
+  static const defaultRelayUrl = 'https://relay.afteroctober.xyz';
 
   /// Fake mode with the simulator, for tests and debug builds.
   static final fake = AppConfig(
@@ -44,6 +49,9 @@ class AppConfig {
   final String? supabaseAnonKey;
   final String authRedirect;
   final bool pushEnabled;
+
+  /// October's relay (https).
+  final String relayUrl;
 
   bool get isFake => mode == OctoMode.fake;
 }
@@ -78,6 +86,7 @@ ConfigResult configFromEnvironment({required bool isRelease}) =>
       ),
       ConfigKeys.authRedirect: String.fromEnvironment(ConfigKeys.authRedirect),
       ConfigKeys.push: String.fromEnvironment(ConfigKeys.push),
+      ConfigKeys.relayUrl: String.fromEnvironment(ConfigKeys.relayUrl),
     }, isRelease: isRelease);
 
 /// Validates [values]. Fake mode is refused in release builds; real mode
@@ -129,6 +138,7 @@ ConfigResult parseConfig(
       httpsUri(ConfigKeys.apiBase, required: false) ??
       Uri.parse('https://www.october.dev');
   final supabaseUrl = httpsUri(ConfigKeys.supabaseUrl, required: real);
+  final relayUrl = httpsUri(ConfigKeys.relayUrl, required: false);
   final anonKey = text(ConfigKeys.supabaseAnonKey);
   if (real && anonKey.isEmpty) {
     problems.add('${ConfigKeys.supabaseAnonKey} is not set');
@@ -155,6 +165,7 @@ ConfigResult parseConfig(
       supabaseAnonKey: anonKey.isEmpty ? null : anonKey,
       authRedirect: redirect!.toString(),
       pushEnabled: pushText == 'firebase',
+      relayUrl: relayUrl?.toString() ?? AppConfig.defaultRelayUrl,
     ),
   );
 }

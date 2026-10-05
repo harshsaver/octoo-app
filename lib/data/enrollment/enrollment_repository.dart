@@ -4,6 +4,7 @@
 /// The claim secret lives only in memory: never logged, never stored.
 library;
 
+import '../../transport/relay/relay_link.dart' show parsePairingLink;
 import '../backend/octo_backend.dart';
 
 enum EnrollmentMode {
@@ -13,19 +14,26 @@ enum EnrollmentMode {
   /// Skips the claim; her OK on the relay pairing adds them (contract
   /// question 1: how a helper's QR differs is still open).
   helper,
+
+  /// October Desktop's own pairing code (`https://october.dev/pair#…`): a
+  /// computer on the same October account, paired over the relay with no
+  /// Octo backend record. How the test Octo pairs.
+  direct,
 }
 
 /// A resolved code. [pairPayload] is what `OctoLink.pair` receives.
 class Enrollment {
   const Enrollment({
     required this.mode,
-    required this.credentials,
+    this.credentials,
     required this.pairPayload,
     this.computerName,
   });
 
   final EnrollmentMode mode;
-  final ClaimCredentials credentials;
+
+  /// What to claim with; null for [EnrollmentMode.direct].
+  final ClaimCredentials? credentials;
   final String pairPayload;
   final String? computerName;
 
@@ -85,6 +93,9 @@ class LinkEnrollment implements EnrollmentRepository {
   @override
   Future<Enrollment> resolve(String payloadOrCode) async {
     final value = payloadOrCode.trim();
+    if (parsePairingLink(value) != null) {
+      return Enrollment(mode: EnrollmentMode.direct, pairPayload: value);
+    }
     final link = parseEnrollmentLink(value);
     if (link != null) {
       return Enrollment(

@@ -105,7 +105,7 @@ void main() {
       'https://www.october.dev/octo/add#en_${'0' * 24}.${'s' * 43}',
     );
     final result = await backend.claim(
-      link.credentials,
+      link.credentials!,
       person: 'Mom',
       language: 'hi',
     );
@@ -119,7 +119,7 @@ void main() {
     });
 
     final typed = await LinkEnrollment().resolve('7k4q-mx2d');
-    await backend.claim(typed.credentials);
+    await backend.claim(typed.credentials!);
     expect(server.body(1), {'claimCode': '7K4QMX2D'});
     expect(
       typed.credentials.toString(),

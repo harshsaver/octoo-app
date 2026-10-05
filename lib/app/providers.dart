@@ -12,6 +12,7 @@ import '../data/auth/auth_service.dart';
 import '../data/auth/supabase_auth.dart';
 import '../data/backend/http_backend.dart';
 import '../data/backend/octo_backend.dart';
+import '../data/backend/relay_aware_backend.dart';
 import '../data/db/database.dart';
 import '../data/enrollment/enrollment_repository.dart';
 import '../data/profile_sync.dart';
@@ -25,6 +26,9 @@ import '../data/session/session_store.dart';
 import '../data/session/sessions_controller.dart';
 import '../data/thread/projection.dart';
 import '../transport/octo_link.dart';
+import '../transport/relay/control_plane.dart';
+import '../transport/relay/relay_link.dart';
+import '../transport/relay/secure_vault.dart';
 import '../transport/simulator/simulator_link.dart';
 import '../transport/unavailable_link.dart';
 import 'config.dart';
@@ -98,7 +102,20 @@ final simulatorLinkProvider = Provider<SimulatorLink>((ref) {
 final octoLinkProvider = Provider<OctoLink>((ref) {
   final config = ref.watch(appConfigProvider);
   if (config.isFake) return ref.watch(simulatorLinkProvider);
-  return UnavailableLink();
+  // One link per signed-in account; signing out closes its connections.
+  if (ref.watch(accountProvider).isSignedOut) return UnavailableLink();
+  final link = RelayLink(
+    control: ControlPlane(
+      authOrigin: config.supabaseUrl!,
+      accessToken: ref.watch(accessTokenProvider),
+      apiKey: config.supabaseAnonKey,
+    ),
+    vault: SecureVault(),
+    relay: Uri.parse(config.relayUrl),
+    platform: Platform.isIOS ? 'ios' : 'android',
+  );
+  ref.onDispose(link.dispose);
+  return link;
 });
 
 /// A fresh October access token for the signed-in person.
@@ -137,7 +154,7 @@ final backendProvider = Provider<OctoBackend>((ref) {
     accessToken: ref.watch(accessTokenProvider),
   );
   ref.onDispose(backend.close);
-  return backend;
+  return RelayAwareBackend(backend, ref.watch(databaseProvider));
 });
 
 final enrollmentProvider = Provider<EnrollmentRepository>((ref) {

@@ -51,10 +51,15 @@ class PairedComputer {
     required this.hostId,
     required this.computerName,
     this.person,
-  });
+    String? bind,
+  }) : bind = bind ?? hostId;
 
   final String computerId;
   final String hostId;
+
+  /// This phone's pairing with it (the relay binding); outbox entries are
+  /// bound to it.
+  final String bind;
   final String computerName;
   final String? person;
 }

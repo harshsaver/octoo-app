@@ -122,7 +122,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
         ComputersCompanion.insert(
           id: paired.computerId,
           hostId: Value(paired.hostId),
-          bind: Value(paired.hostId),
+          bind: Value(paired.bind),
           computerName: computerName,
           person: person,
           language: Value(_language),
@@ -136,7 +136,7 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
       );
       final session = await ref
           .read(sessionsControllerProvider)
-          .ensure(paired.computerId, bind: paired.hostId);
+          .ensure(paired.computerId, bind: paired.bind);
       await session.addNote('welcome', l.welcome(helper, person));
       // Her computer learns the names through the profile sync: it is owed
       // (generation 1) and runs now or when she's back.
