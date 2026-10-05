@@ -307,7 +307,7 @@ abstract class AppLocalizations {
   /// No description provided for @emptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Open Octo on the family computer and choose Add a family member.'**
+  /// **'Open October on the family computer, go to Settings, then Phone access, and choose Add a phone.'**
   String get emptyHint;
 
   /// No description provided for @noMatches.
@@ -1015,7 +1015,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanCaption.
   ///
   /// In en, this message translates to:
-  /// **'On the family computer, click the floating Octo, open Family, and choose Add a family member. Point your camera at the code.'**
+  /// **'On the family computer, open October, go to Settings, then Phone access, and choose Add a phone. Point your camera at the code.'**
   String get scanCaption;
 
   /// No description provided for @typeCodeInstead.

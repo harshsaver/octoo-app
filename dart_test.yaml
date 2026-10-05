@@ -1,0 +1,6 @@
+tags:
+  # Pixel comparisons against committed baselines (test/goldens). Regenerate
+  # only on purpose, with the pinned Flutter version:
+  #   TZ=UTC flutter test --tags golden --update-goldens
+  # (UTC, as CI runs: times on screen depend on the timezone.)
+  golden:

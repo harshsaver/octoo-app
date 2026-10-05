@@ -112,7 +112,7 @@ void main() {
       expect(find.text('Add your first Octo'), findsOneWidget);
       expect(
         find.text(
-          'Open Octo on the family computer and choose Add a family member.',
+          'Open October on the family computer, go to Settings, then Phone access, and choose Add a phone.',
         ),
         findsOneWidget,
       );

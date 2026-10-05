@@ -37,6 +37,9 @@ jobs:
           fi
       - run: flutter analyze
       - run: flutter test
+        env:
+          # Goldens are baselined in UTC (times on screen follow the timezone).
+          TZ: UTC
 
   android:
     name: Android debug build
