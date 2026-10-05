@@ -20,8 +20,8 @@ import 'package:octo_family/transport/simulator/simulated_computer.dart';
 import 'package:qr/qr.dart';
 
 import 'host_relay.dart';
-import 'laptop_tools.dart';
-import 'octo_brain.dart';
+import 'backend_brain.dart';
+import 'laptop.dart';
 import 'october_cloud.dart';
 import 'test_octo.dart';
 
@@ -35,11 +35,13 @@ Future<void> main(List<String> arguments) async {
     ..addOption('person', defaultsTo: 'Mom')
     ..addFlag('autopilot', help: 'Mom answers every question by herself after a moment.')
     ..addFlag(
-      'ai',
+      'agent',
       defaultsTo: true,
-      help: 'Do tasks for real with Claude and this laptop (needs ANTHROPIC_API_KEY). '
-          'With --no-ai, tasks and screenshots are simulated.',
+      help: "Do tasks for real on this laptop with October's agent (the backend's model; "
+          'billed to your October account). With --no-agent, tasks and screenshots are simulated.',
     )
+    ..addFlag('trust', help: 'Run the agent\'s clicks and typing without asking y first.')
+    ..addOption('api', help: 'October API base (default OCTO_API_BASE from --config, or https://www.october.dev).')
     ..addFlag('help', abbr: 'h', negatable: false);
   final args = parser.parse(arguments);
   if (args.flag('help')) {
@@ -101,36 +103,26 @@ Future<void> main(List<String> arguments) async {
     return answer.future;
   }
 
-  final claudeKey = Platform.environment['ANTHROPIC_API_KEY'];
-  OctoBrain? brain;
-  if (args.flag('ai') && (claudeKey == null || claudeKey.isEmpty)) {
-    _say('No ANTHROPIC_API_KEY: tasks and screenshots will be simulated. '
-        'Set it (export ANTHROPIC_API_KEY=…) and restart for real answers from this laptop.');
-  } else if (args.flag('ai')) {
-    final script = '${File.fromUri(Platform.script).parent.path}/bin/screenshot.py';
-    brain = OctoBrain(
-      apiKey: claudeKey!,
+  BackendBrain? brain;
+  if (args.flag('agent')) {
+    final dir = File.fromUri(Platform.script).parent.path;
+    final apiBase = Uri.parse(args.option('api') ?? config['OCTO_API_BASE'] ?? 'https://www.october.dev');
+    final trust = args.flag('trust');
+    brain = BackendBrain(
+      apiBase: apiBase,
+      accessToken: session.accessToken,
       person: args.option('person')!,
-      computerName: args.option('name')!,
-      osName: (await runProcess('bash', ['-c', '. /etc/os-release; echo "\$PRETTY_NAME"'])).out,
       log: _say,
-      screenCapture: () async {
-        try {
-          return WorkScreen(dataUri: jpegDataUri(await captureScreen(script)));
-        } on Object catch (e) {
-          _say('Screenshot failed: $e');
-          return null;
-        }
-      },
-      tools: laptopTools(
-        screenshotScript: script,
-        approveCommand: (command, why) =>
-            ask('Octo wants to run:  $command\n           why: $why\n           Type y to allow, n to refuse.'),
-        showOnScreen: computer.show,
-      ),
+      capture: () => captureScreen('$dir/bin/screenshot.py'),
+      hands: PortalHands('$dir/bin/control.py', '${stateFile.parent.path}/remote-desktop.token'),
+      approveStep: (what) => trust ? Future.value(true) : ask('Octo wants to:  $what\n           Type y to let it, n to stop the task.'),
     );
     computer.worker = brain;
-    _say('AI on: tasks run for real on this laptop with $octoModel; shell commands need your y.');
+    _say("Agent on: tasks run for real on this laptop with October's agent ($apiBase), "
+        '${trust ? 'without asking' : 'asking you before each click or keypress'}. '
+        'The first click may ask to "Allow remote interaction"; say yes once.');
+  } else {
+    _say('Agent off: tasks and screenshots are simulated.');
   }
   final octo = TestOcto(
     cloud: cloud,
@@ -218,7 +210,7 @@ Future<void> main(List<String> arguments) async {
           settings.autopilot = !settings.autopilot;
           _say('Autopilot ${settings.autopilot ? 'on' : 'off'}.');
         case 'quit' || 'exit':
-          brain?.close();
+          await brain?.close();
           await octo.dispose();
           exit(0);
         case '':

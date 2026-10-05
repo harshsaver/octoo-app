@@ -4,12 +4,16 @@ A stand-in for the Octo desktop app, for trying the family app for real:
 real October sign-in, real pairing, October's real relay, end-to-end
 encryption. "Mom" is you, at the terminal: you approve what Octo does.
 
-With an Anthropic API key, tasks are **done for real on this laptop** by
-Claude (`claude-opus-5-5`): it takes real screenshots, checks the real
-network, memory, disk, battery and running programs, and can run shell
-commands, **each shown to you first and run only if you type `y`**. The
-answers and screenshots on the phone are real. Without a key, tasks and
-screenshots are simulated (canned answers, a sample picture).
+Tasks are **done for real on this laptop** by October's agent, the same
+backend the Octo engine uses (`POST /api/octo/agent/step` in saturday). The
+model and its key live in the backend; the test Octo only signs in with your
+October account, and usage is billed to that account like Octo's. For each
+step it sends the task and a real screenshot, gets one step back (click,
+type, keys, scroll, open a link or an app, check the Wi-Fi, done, give up),
+and does it here: **each action (a click, typing, opening a link…) is shown
+to you first and only
+runs if you type `y`** (`--trust` skips that). "Show me the screen" sends
+the real screen. `--no-agent` simulates tasks instead.
 
 ## Needs
 
@@ -18,11 +22,13 @@ screenshots are simulated (canned answers, a sample picture).
 - The phone signed in to **the same account** (the app's "Use a password"
   option works).
 - `config/real.json` (gitignored), with `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-- For real tasks: `export ANTHROPIC_API_KEY=sk-ant-…` (from
-  console.anthropic.com → API keys). Usage is billed to that key.
-- Screenshots use the desktop portal (GNOME/KDE on Wayland): the first one
-  may ask "Allow screenshot?" once. Needs `python3-gobject` and ImageMagick
-  (`magick`), both standard on Fedora.
+- The Octo API switched on for your account (`octo_policy` in saturday;
+  migration 054 in production). If it isn't, a task ends with the backend's
+  own sentence (for example that Octo isn't available yet).
+- Screenshots and control use the desktop portal (GNOME/KDE on Wayland):
+  the first screenshot may ask "Allow screenshot?" and the first click
+  "Allow remote interaction?", once each. Needs `python3-gobject` and
+  ImageMagick (`magick`), both standard on Fedora.
 
 ## Run
 
@@ -46,7 +52,7 @@ computer.
 | `pair` | a new QR code (each works for 5 minutes, once) |
 | `y` / `n` | answer a pairing request |
 | `ok` / `no` | Mom answers the question on her screen (a task, showing the screen) |
-| `y` / `n` | also: allow or refuse a shell command Octo wants to run |
+| `y` / `n` | also: allow or refuse the next action the agent wants (click, typing, opening…) |
 | `todo` | Mom saves a to-do for you (with a screenshot) |
 | `sos` or `help <text>` | Mom asks for help |
 | `offline` / `online` | the computer goes away / comes back |
@@ -54,8 +60,9 @@ computer.
 | `auto` | autopilot: Mom answers by herself after a moment |
 | `status`, `quit` | |
 
-Start with `--autopilot` to have Mom answer task questions by herself
-(shell commands still need your `y`), `--no-ai` to force simulated tasks, and
+Start with `--autopilot` to have Mom answer task questions by herself,
+`--trust` to let the agent click and type without asking, `--no-agent` to
+simulate tasks, and
 `--name "Dad's PC" --person Dad` for another computer (give it its own
 `--state` file).
 

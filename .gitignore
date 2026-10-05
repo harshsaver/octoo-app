@@ -37,3 +37,6 @@ ios/Runner/GoogleService-Info.plist
 config/*.json
 !config/example.json
 !config/fake.json
+
+# Python bytecode (tool/test_octo helpers)
+__pycache__/
