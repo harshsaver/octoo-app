@@ -16,6 +16,7 @@ import '../data/backend/relay_aware_backend.dart';
 import '../data/db/database.dart';
 import '../data/enrollment/enrollment_repository.dart';
 import '../data/profile_sync.dart';
+import '../data/relay_restore.dart';
 import '../data/push/firebase_push.dart';
 import '../data/push/push_registrar.dart';
 import '../data/push/push_service.dart';
@@ -223,6 +224,22 @@ final sessionsControllerProvider = Provider<SessionsController>((ref) {
 /// Starts the sessions once (watched by the app root).
 final sessionsStartupProvider = FutureProvider<void>((ref) async {
   ref.watch(profileSyncProvider);
+  final link = ref.watch(octoLinkProvider);
+  final account = ref.watch(accountProvider);
+  if (link is RelayLink && !account.isSignedOut) {
+    // Before sessions start, so restored computers get theirs.
+    try {
+      await reconcileRelayBindings(
+        db: ref.watch(databaseProvider),
+        vault: link.vault,
+        userId: account.userId,
+        pairingNow: link.pairingNow,
+        now: DateTime.now(),
+      );
+    } on Object {
+      // Secure storage unavailable: the list stays as it is; next start retries.
+    }
+  }
   await ref.watch(sessionsControllerProvider).start();
 });
 

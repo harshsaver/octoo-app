@@ -193,7 +193,15 @@ class RelayLink implements OctoLink {
       hostName: hostName,
       deviceStaticKey: b64url(deviceStatic.privateKey),
       deviceSignSeed: b64url(deviceSign.seed),
+      startedAt: _now().millisecondsSinceEpoch,
     );
+    // Pairing this computer again must not lose a pairing that works if
+    // this attempt fails: the old one is only replaced at `finalizing`, and
+    // put back on failure.
+    final previous = await vault.read(session.userId, computerId);
+    final keepPrevious = previous != null && previous.usable;
+    if (!keepPrevious) await vault.write(binding);
+    _pairing.add(computerId);
     var paired = false;
     try {
       final DeviceConnection c;
@@ -241,7 +249,7 @@ class RelayLink implements OctoLink {
         await c.sendJson(FrameKind.pairOffer, {'intentId': qr.intentId, 'nonce': uuidV4()});
         emit(const PairingWaitingForHer());
         final value = await Future.any([credential.future, closed]).timeout(credentialTimeout);
-        binding = binding.withCredential(value);
+        binding = binding.copyWith(credential: value, phase: BindingPhase.finalizing, profile: previous?.profile);
         await vault.write(binding);
         await c.sendJson(FrameKind.pairAck, const {});
         await Future.any([active.future, closed]).timeout(const Duration(seconds: 60));
@@ -272,6 +280,8 @@ class RelayLink implements OctoLink {
         // Not reachable right now: it'll be checked on every connection.
       }
       if (cancelled()) return;
+      binding = binding.copyWith(phase: BindingPhase.complete);
+      await vault.write(binding);
       paired = true;
       emit(
         PairingPaired(
@@ -279,9 +289,22 @@ class RelayLink implements OctoLink {
         ),
       );
     } finally {
-      if (!paired) await vault.delete(binding.userId, computerId);
+      _pairing.remove(computerId);
+      if (!paired) {
+        if (keepPrevious) {
+          await vault.write(previous);
+        } else {
+          await vault.delete(binding.userId, computerId);
+        }
+      }
     }
   }
+
+  final Set<String> _pairing = {};
+
+  /// Computers being paired right now; their `started` bindings are not
+  /// leftovers.
+  Set<String> get pairingNow => Set.unmodifiable(_pairing);
 
   // ---------------------------------------------------------------------
   // Connection
@@ -304,7 +327,7 @@ class RelayLink implements OctoLink {
       Duration? wait;
       try {
         final binding = await _binding(computerId);
-        if (binding == null || binding.credential == null) {
+        if (binding == null || !binding.usable) {
           state(LinkState.offline);
           return; // not paired on this phone: nothing to retry
         }
