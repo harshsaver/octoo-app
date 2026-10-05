@@ -111,6 +111,11 @@ class FakeOctober implements HostCloud {
 
   Future<http.Response> handle(http.Request request) async {
     expect(request.headers['authorization'], 'Bearer $jwt');
+    if (request.method == 'GET' && request.url.path == '/rest/v1/mobile_pair_intents') {
+      final id = request.url.queryParameters['intent_id']!.replaceFirst('eq.', '');
+      final i = intents[id];
+      return http.Response(jsonEncode([if (i != null) {'state': i['state']}]), 200);
+    }
     final body = jsonDecode(request.body) as Map<String, Object?>;
     http.Response ok(Object json) => http.Response(jsonEncode(json), 200);
     switch (request.url.path) {
@@ -187,11 +192,23 @@ class SwitchableOcto extends TestOcto {
   bool octoberOnly = false;
   bool dropAfterSubscribe = false;
 
+  /// Family messages wait for this before being answered.
+  Completer<void>? stall;
+  int inFlight = 0;
+  int maxInFlightSeen = 0;
+
   @override
   Future<({int status, Map<String, Object?> body})> request(
     HostSession session,
     Map<String, Object?> envelope,
   ) async {
+    final gate = stall;
+    if (gate != null && envelope['method'] == familyMethod) {
+      inFlight++;
+      if (inFlight > maxInFlightSeen) maxInFlightSeen = inFlight;
+      await gate.future;
+      inFlight--;
+    }
     if (!octoberOnly) return super.request(session, envelope);
     return (
       status: 200,
@@ -285,11 +302,16 @@ void main() {
     await relay.close();
   });
 
+  final phasesSeen = <BindingPhase?>[];
+
   Future<List<PairingProgress>> pair({bool match = true}) async {
     final qr = october.qrFor(await october.createPairing());
     final seen = <PairingProgress>[];
+    phasesSeen.clear();
+    final vault = link.vault as MemoryVault;
     await for (final p in link.pair(qr, helperName: 'Harsh', deviceLabel: "Harsh's Android phone")) {
       seen.add(p);
+      phasesSeen.add(vault.bindings.values.firstOrNull?.phase);
       if (p is PairingCompareCode) {
         // The same six digits on both screens.
         await _until(() => hostLog.any((l) => l.contains('Code on both screens: ${p.code}')));
@@ -366,6 +388,7 @@ void main() {
     final progress = await pair();
     expect(progress.last, isA<PairingFailed>());
     expect((progress.last as PairingFailed).kind, PairingFailureKind.reportedByComputer);
+    expect((progress.last as PairingFailed).reason, 'She said no on her computer.');
     expect(computer.helpers, isEmpty);
   }, timeout: const Timeout(Duration(minutes: 1)));
 
@@ -421,6 +444,65 @@ void main() {
     expect(states, isNot(contains(LinkState.offline)));
     await sub.cancel();
     steady.dispose();
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('at most 8 requests wait at once; one that times out is cancelled on her computer', () async {
+    final paired = ((await pair()).last as PairingPaired).computer;
+    final quick = RelayLink(
+      control: ControlPlane(
+        authOrigin: Uri.parse('https://auth.test'),
+        accessToken: () async => october.jwt,
+        client: MockClient(october.handle),
+      ),
+      vault: link.vault,
+      relay: relay.uri,
+      platform: 'android',
+      requestTimeout: const Duration(seconds: 2),
+    );
+    final states = <LinkState>[];
+    final sub = quick.connect(paired.computerId).listen(states.add);
+    await _until(() => states.contains(LinkState.connected));
+    octo.stall = Completer<void>();
+    final sends = [
+      for (var i = 0; i < 12; i++) quick.send(paired.computerId, {'type': 'status', 'requestId': 'r$i'}).then((_) => 'ok', onError: (Object e) => e.runtimeType.toString()),
+    ];
+    await _until(() => octo.inFlight == 8, what: 'in flight ${octo.inFlight}');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(octo.maxInFlightSeen, 8);
+    // Nothing answers: the first 8 time out and are cancelled on her side.
+    await _until(() => octo.relay.sessions.values.single.cancels >= 8, timeout: const Duration(seconds: 6));
+    octo.stall!.complete();
+    octo.stall = null;
+    final results = await Future.wait(sends);
+    expect(results.take(8), everyElement('TimeoutException'));
+    await sub.cancel();
+    quick.dispose();
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('the binding moves started → complete while pairing, and the link keeps it', () async {
+    final progress = await pair();
+    final paired = (progress.last as PairingPaired).computer;
+    // Saved before the handshake (the code to compare is shown), complete at the end.
+    expect(phasesSeen.whereType<BindingPhase>().toSet().toList(), [BindingPhase.started, BindingPhase.complete]);
+    expect(link.pairingNow, isEmpty);
+    final binding = (link.vault as MemoryVault).bindings.values.single;
+    expect((binding.computerId, binding.usable), (paired.computerId, true));
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  test('pairing the same computer again and failing keeps the pairing that works', () async {
+    final first = ((await pair()).last as PairingPaired).computer;
+    final vault = link.vault as MemoryVault;
+    final working = vault.bindings.values.single;
+    approve = false; // this time she says no
+    final again = await pair();
+    expect(again.last, isA<PairingFailed>());
+    final kept = vault.bindings.values.single;
+    expect((kept.bind, kept.credential, kept.phase), (working.bind, working.credential, BindingPhase.complete));
+    // …and it still connects.
+    final states = <LinkState>[];
+    final sub = link.connect(first.computerId).listen(states.add);
+    await _until(() => states.contains(LinkState.connected), what: '$states');
+    await sub.cancel();
   }, timeout: const Timeout(Duration(minutes: 1)));
 
   test('a link that is not an October pairing code', () async {

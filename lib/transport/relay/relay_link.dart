@@ -193,7 +193,15 @@ class RelayLink implements OctoLink {
       hostName: hostName,
       deviceStaticKey: b64url(deviceStatic.privateKey),
       deviceSignSeed: b64url(deviceSign.seed),
+      startedAt: _now().millisecondsSinceEpoch,
     );
+    // Pairing this computer again must not lose a pairing that works if
+    // this attempt fails: the old one is only replaced at `finalizing`, and
+    // put back on failure.
+    final previous = await vault.read(session.userId, computerId);
+    final keepPrevious = previous != null && previous.usable;
+    if (!keepPrevious) await vault.write(binding);
+    _pairing.add(computerId);
     var paired = false;
     try {
       final DeviceConnection c;
@@ -241,7 +249,7 @@ class RelayLink implements OctoLink {
         await c.sendJson(FrameKind.pairOffer, {'intentId': qr.intentId, 'nonce': uuidV4()});
         emit(const PairingWaitingForHer());
         final value = await Future.any([credential.future, closed]).timeout(credentialTimeout);
-        binding = binding.withCredential(value);
+        binding = binding.copyWith(credential: value, phase: BindingPhase.finalizing, profile: previous?.profile);
         await vault.write(binding);
         await c.sendJson(FrameKind.pairAck, const {});
         await Future.any([active.future, closed]).timeout(const Duration(seconds: 60));
@@ -249,11 +257,15 @@ class RelayLink implements OctoLink {
         return emit(failed(PairingFailureKind.timedOut));
       } on _PairingClosed catch (e) {
         if (cancelled()) return;
-        return emit(
-          e.code == RelayClose.hostOffline || e.code == RelayClose.hostDisconnected
-              ? failed(PairingFailureKind.offline)
-              : failed(PairingFailureKind.reportedByComputer, reason: 'Her computer ended the pairing.'),
-        );
+        if (e.code == RelayClose.hostOffline || e.code == RelayClose.hostDisconnected) {
+          return emit(failed(PairingFailureKind.offline));
+        }
+        // Her computer ended it: October knows whether she said no.
+        return emit(switch (await _intentState(qr.intentId)) {
+          'denied' => failed(PairingFailureKind.reportedByComputer, reason: 'She said no on her computer.'),
+          'expired' => failed(PairingFailureKind.timedOut),
+          _ => failed(PairingFailureKind.reportedByComputer, reason: 'Her computer ended the pairing.'),
+        });
       } on Object {
         return emit(failed(PairingFailureKind.reportedByComputer, reason: 'Pairing failed. Try a fresh code.'));
       } finally {
@@ -272,6 +284,8 @@ class RelayLink implements OctoLink {
         // Not reachable right now: it'll be checked on every connection.
       }
       if (cancelled()) return;
+      binding = binding.copyWith(phase: BindingPhase.complete);
+      await vault.write(binding);
       paired = true;
       emit(
         PairingPaired(
@@ -279,9 +293,22 @@ class RelayLink implements OctoLink {
         ),
       );
     } finally {
-      if (!paired) await vault.delete(binding.userId, computerId);
+      _pairing.remove(computerId);
+      if (!paired) {
+        if (keepPrevious) {
+          await vault.write(previous);
+        } else {
+          await vault.delete(binding.userId, computerId);
+        }
+      }
     }
   }
+
+  final Set<String> _pairing = {};
+
+  /// Computers being paired right now; their `started` bindings are not
+  /// leftovers.
+  Set<String> get pairingNow => Set.unmodifiable(_pairing);
 
   // ---------------------------------------------------------------------
   // Connection
@@ -304,7 +331,7 @@ class RelayLink implements OctoLink {
       Duration? wait;
       try {
         final binding = await _binding(computerId);
-        if (binding == null || binding.credential == null) {
+        if (binding == null || !binding.usable) {
           state(LinkState.offline);
           return; // not paired on this phone: nothing to retry
         }
@@ -407,7 +434,35 @@ class RelayLink implements OctoLink {
 
   /// One `req`; completes with the computer's answer. October's convention:
   /// success is a 2xx status *and* `{"ok": true}` in the body.
+  /// The pairing intent's state (`pending`, `approved`, `denied`,
+  /// `expired`, `active`), or null if October can't say right now.
+  Future<String?> _intentState(String intentId) async {
+    try {
+      final rows = await control
+          .select('mobile_pair_intents', {'select': 'state', 'intent_id': 'eq.$intentId', 'limit': '1'})
+          .timeout(const Duration(seconds: 5));
+      return rows.isEmpty ? null : rows.first['state'] as String?;
+    } on Object {
+      return null;
+    }
+  }
+
   Future<_Reply> _request(_Live live, String method, Map<String, Object?> payload) async {
+    // At most [maxInFlight] requests wait for her computer at once (October
+    // Desktop ends the session past 16).
+    try {
+      await live.slots.acquire();
+    } on Object {
+      throw const _NotSent();
+    }
+    try {
+      return await _requestNow(live, method, payload);
+    } finally {
+      live.slots.release();
+    }
+  }
+
+  Future<_Reply> _requestNow(_Live live, String method, Map<String, Object?> payload) async {
     final envelope = {
       'apiVersion': 2,
       'requestId': uuidV4(),
@@ -428,6 +483,11 @@ class RelayLink implements OctoLink {
       requestTimeout,
       onTimeout: () {
         live.pending.remove(id);
+        // Tell her computer to stop working on it.
+        final target = ByteData(4)..setUint32(0, id);
+        if (live.connection.isOpen) {
+          live.connection.send(FrameKind.cancel, target.buffer.asUint8List()).ignore();
+        }
         throw TimeoutException('her computer did not answer');
       },
     );
@@ -467,7 +527,12 @@ class RelayLink implements OctoLink {
   Future<void> send(String computerId, Map<String, Object?> message) async {
     final live = _live[computerId];
     if (live == null || !live.connection.isOpen) throw LinkUnavailableException(computerId);
-    final reply = await _request(live, familyMethod, message);
+    final _Reply reply;
+    try {
+      reply = await _request(live, familyMethod, message);
+    } on _NotSent {
+      throw LinkUnavailableException(computerId);
+    }
     if (!reply.ok) {
       final error = reply.body['error'];
       final code = error is Map<String, Object?> ? error['code'] : null;
@@ -534,12 +599,16 @@ class RelayLink implements OctoLink {
   }
 }
 
+/// Requests allowed to wait for her computer at once, per connection.
+const maxInFlight = 8;
+
 class _Live {
   _Live(this.connection, this.bind);
 
   final DeviceConnection connection;
   final String bind;
   final Map<int, Completer<_Reply>> pending = {};
+  final slots = _Slots(maxInFlight);
   StreamSubscription<AssembledFrame>? frames;
 
   void close() {
@@ -549,6 +618,40 @@ class _Live {
       p.completeError(StateError('the connection closed'));
     }
     pending.clear();
+    slots.fail(StateError('the connection closed'));
+  }
+}
+
+/// A counting semaphore; [fail] wakes everyone waiting with an error.
+class _Slots {
+  _Slots(this._free);
+
+  int _free;
+  final _waiting = <Completer<void>>[];
+
+  Future<void> acquire() {
+    if (_free > 0) {
+      _free--;
+      return Future.value();
+    }
+    final c = Completer<void>();
+    _waiting.add(c);
+    return c.future;
+  }
+
+  void release() {
+    if (_waiting.isNotEmpty) {
+      _waiting.removeAt(0).complete();
+    } else {
+      _free++;
+    }
+  }
+
+  void fail(Object error) {
+    for (final c in _waiting) {
+      c.completeError(error);
+    }
+    _waiting.clear();
   }
 }
 
@@ -565,6 +668,11 @@ class _Reply {
 /// October host) without Octo.
 class NotOctoException implements Exception {
   const NotOctoException();
+}
+
+/// Closed while waiting for a slot: nothing went out.
+class _NotSent implements Exception {
+  const _NotSent();
 }
 
 class _PairingClosed implements Exception {
