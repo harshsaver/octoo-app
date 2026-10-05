@@ -112,7 +112,7 @@ void main() {
       expect(find.text('Add your first Octo'), findsOneWidget);
       expect(
         find.text(
-          'Open Octo on the family computer and choose Add a family member.',
+          'Open October on the family computer, go to Settings, then Phone access, and choose Add a phone.',
         ),
         findsOneWidget,
       );
@@ -343,6 +343,10 @@ void stage4Tests() {
 
       await tester.tap(find.text('Sign in with October'));
       await _pump(tester);
+      // Password comes first; the link is one tap away.
+      expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+      await tester.tap(find.text('Email me a link instead'));
+      await _pump(tester);
       await tester.enterText(find.byType(TextField), 'harsh@example.com');
       await tester.tap(find.text('Email me a link'));
       await _pump(tester);
@@ -368,13 +372,11 @@ void stage4Tests() {
     },
   );
 
-  testWidgets('or sign in with email and password', (tester) async {
+  testWidgets('sign in with email and password (shown first)', (tester) async {
     final auth = FakeAuth(signedIn: false);
     await tester.pumpWidget(_app(auth: auth));
     await _pump(tester);
     await tester.tap(find.text('Sign in with October'));
-    await _pump(tester);
-    await tester.tap(find.text('Use a password instead'));
     await _pump(tester);
     await tester.enterText(
       find.widgetWithText(TextField, 'Email'),

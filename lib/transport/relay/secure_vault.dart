@@ -20,14 +20,27 @@ class SecureVault implements RelayVault {
   static String _key(String userId, String computerId) => 'octo.relay.$userId.$computerId';
 
   @override
-  Future<RelayBinding?> read(String userId, String computerId) async {
-    final raw = await _storage.read(key: _key(userId, computerId));
-    if (raw == null) return null;
+  Future<List<RelayBinding>> list(String userId) async {
+    final prefix = 'octo.relay.$userId.';
+    final all = await _storage.readAll();
+    return [
+      for (final MapEntry(:key, :value) in all.entries)
+        if (key.startsWith(prefix)) ?_parse(value),
+    ];
+  }
+
+  static RelayBinding? _parse(String raw) {
     try {
       return RelayBinding.fromJson(jsonDecode(raw) as Map<String, Object?>);
     } on Object {
       return null;
     }
+  }
+
+  @override
+  Future<RelayBinding?> read(String userId, String computerId) async {
+    final raw = await _storage.read(key: _key(userId, computerId));
+    return raw == null ? null : _parse(raw);
   }
 
   @override

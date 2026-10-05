@@ -75,7 +75,11 @@ class NoiseKeyPair {
       keyPair: SimpleKeyPairData(privateKey, publicKey: SimplePublicKey(publicKey, type: KeyPairType.x25519), type: KeyPairType.x25519),
       remotePublicKey: SimplePublicKey(remotePublic, type: KeyPairType.x25519),
     );
-    return Uint8List.fromList(await shared.extractBytes());
+    final bytes = Uint8List.fromList(await shared.extractBytes());
+    // A low-order public key gives an all-zero secret; libsodium refuses
+    // it, and so does this.
+    if (bytes.every((b) => b == 0)) throw const NoiseException('invalid public key', authentication: true);
+    return bytes;
   }
 }
 
@@ -151,10 +155,13 @@ List<int> _nonce(int n) {
 
 /// One direction of an established channel.
 class NoiseCipher {
-  NoiseCipher(List<int> key) : _key = SecretKeyData(Uint8List.fromList(key.sublist(0, _keyLen)));
+  /// [counter] is where the nonce starts (tests of the message cap).
+  NoiseCipher(List<int> key, {int counter = 0})
+    : _key = SecretKeyData(Uint8List.fromList(key.sublist(0, _keyLen))),
+      _n = counter;
 
   final SecretKeyData _key;
-  int _n = 0;
+  int _n;
 
   int get count => _n;
 

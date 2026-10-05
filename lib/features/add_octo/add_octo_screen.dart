@@ -105,16 +105,7 @@ class _AddOctoScreenState extends ConsumerState<AddOctoScreen> {
         fit: StackFit.expand,
         children: [
           if (!_camera)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(OctoSpace.xl),
-                child: Text(
-                  l.cameraUnavailable,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: onCamera),
-                ),
-              ),
-            )
+            _InsideFrame(frame: frame, text: l.cameraUnavailable)
           else
             MobileScanner(
               controller: _scanner,
@@ -127,16 +118,8 @@ class _AddOctoScreenState extends ConsumerState<AddOctoScreen> {
                   }
                 }
               },
-              errorBuilder: (context, error) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(OctoSpace.xl),
-                  child: Text(
-                    l.cameraUnavailable,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: onCamera),
-                  ),
-                ),
-              ),
+              errorBuilder: (context, error) =>
+                  _InsideFrame(frame: frame, text: l.cameraUnavailable),
             ),
           // Scrims keep the caption and buttons readable over any camera image.
           const DecoratedBox(
@@ -290,4 +273,24 @@ class _TypeCodeSheetState extends State<_TypeCodeSheet> {
       ),
     );
   }
+}
+
+/// A message centred inside the scanning frame, never across its border.
+class _InsideFrame extends StatelessWidget {
+  const _InsideFrame({required this.frame, required this.text});
+
+  final double frame;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: SizedBox(
+      width: frame - 2 * OctoSpace.lg,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white),
+      ),
+    ),
+  );
 }

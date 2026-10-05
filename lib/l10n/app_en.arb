@@ -59,7 +59,7 @@
   "settings": "Settings",
   "playMom": "Play Mom (simulator)",
   "emptyTitle": "Add your first Octo",
-  "emptyHint": "Open Octo on the family computer and choose Add a family member.",
+  "emptyHint": "Open October on the family computer, go to Settings, then Phone access, and choose Add a phone.",
   "noMatches": "No Octos match “{query}”",
   "@noMatches": {
     "placeholders": {
@@ -465,7 +465,7 @@
   "timelineStarted": "Started",
   "timelineEnded": "Ended",
   "activityMayBeMissing": "Older activity may be missing",
-  "scanCaption": "On the family computer, click the floating Octo, open Family, and choose Add a family member. Point your camera at the code.",
+  "scanCaption": "On the family computer, open October, go to Settings, then Phone access, and choose Add a phone. Point your camera at the code.",
   "typeCodeInstead": "Type the code instead",
   "smallPrint": "Only add a family member's computer while you're with them, or on a call with them.",
   "useSimulator": "Use a simulated computer",

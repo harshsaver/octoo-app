@@ -76,6 +76,9 @@ class HostSession {
   final _ids = MessageIds();
   bool authenticated = false;
   bool subscribed = false;
+
+  /// `cancel` frames received (the phone gave up waiting).
+  int cancels = 0;
   bool _closed = false;
   Uint8List? _queued;
   Future<void> _receiving = Future.value();
@@ -155,38 +158,41 @@ class HostSession {
     }
     switch (f.kind) {
       case FrameKind.req:
-        final envelope = _json(f.data);
-        ({int status, Map<String, Object?> body}) reply;
-        try {
-          reply = await _host.delegate.request(this, envelope);
-        } on Object catch (e) {
-          _host.delegate.log('request failed: $e');
-          reply = (
-            status: 500,
-            body: {
-              'apiVersion': 2,
-              'requestId': envelope['requestId'],
-              'ok': false,
-              'error': {'code': 'INTERNAL', 'message': '$e'},
-            },
-          );
-        }
-        final body = utf8.encode(jsonEncode(reply.body));
-        await _send(
-          FrameKind.res,
-          encodeResponse(reply.status, DateTime.now().millisecondsSinceEpoch, body),
-          f.messageId,
-        );
+        // Answered on its own, so a slow request doesn't hold up pings,
+        // cancels or the next request (as October Desktop does).
+        unawaited(_answer(_json(f.data), f.messageId));
       case FrameKind.sub:
         subscribed = true;
         _host.delegate.subscribed(this);
       case FrameKind.unsub:
         subscribed = false;
       case FrameKind.cancel:
-        break;
+        cancels++;
       default:
         throw const FrameViolation('forbidden active-session frame');
     }
+  }
+
+  Future<void> _answer(Map<String, Object?> envelope, int messageId) async {
+    ({int status, Map<String, Object?> body}) reply;
+    try {
+      reply = await _host.delegate.request(this, envelope);
+    } on Object catch (e) {
+      _host.delegate.log('request failed: $e');
+      reply = (
+        status: 500,
+        body: {
+          'apiVersion': 2,
+          'requestId': envelope['requestId'],
+          'ok': false,
+          'error': {'code': 'INTERNAL', 'message': '$e'},
+        },
+      );
+    }
+    if (_closed) return;
+    final body = utf8.encode(jsonEncode(reply.body));
+    await _send(FrameKind.res, encodeResponse(reply.status, DateTime.now().millisecondsSinceEpoch, body), messageId)
+        .catchError((Object _) {});
   }
 
   /// Sends a pairing frame (`pairCredential`, `pairActive`), as October does

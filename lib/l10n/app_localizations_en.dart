@@ -124,7 +124,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyHint =>
-      'Open Octo on the family computer and choose Add a family member.';
+      'Open October on the family computer, go to Settings, then Phone access, and choose Add a phone.';
 
   @override
   String noMatches(String query) {
@@ -558,7 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanCaption =>
-      'On the family computer, click the floating Octo, open Family, and choose Add a family member. Point your camera at the code.';
+      'On the family computer, open October, go to Settings, then Phone access, and choose Add a phone. Point your camera at the code.';
 
   @override
   String get typeCodeInstead => 'Type the code instead';
