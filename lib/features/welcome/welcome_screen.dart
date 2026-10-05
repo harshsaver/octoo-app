@@ -58,7 +58,8 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// Email link (or the code from the email), Google, Apple.
+/// Email and password (as October Desktop), or an email link (or the code
+/// from the email), Google, Apple.
 class SignInSheet extends ConsumerStatefulWidget {
   const SignInSheet({super.key});
 
@@ -70,7 +71,8 @@ class _SignInSheetState extends ConsumerState<SignInSheet> {
   final _email = TextEditingController();
   final _code = TextEditingController();
   final _password = TextEditingController();
-  bool _withPassword = false;
+  // Email and password first, as October signs in; a link is the other way.
+  bool _withPassword = true;
   String? _sentTo;
   String? _error;
   bool _busy = false;
