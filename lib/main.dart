@@ -1,5 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,13 +8,19 @@ import 'app/app_settings.dart';
 import 'app/config.dart';
 import 'data/account_scope.dart';
 import 'data/auth/supabase_auth.dart';
-import 'data/push/firebase_push.dart';
+import 'data/push/unified_push.dart';
 
 /// `--dart-define-from-file=config/fake.json` runs the simulator;
 /// `config/real.json` (untracked) signs in with October. A release build
 /// refuses fake mode (see `tool/check_release_config.dart`).
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Android started Dart only to show a push that arrived while the app
+  // wasn't running (UnifiedPush): show it, no UI.
+  if (args.contains('--unifiedpush-bg')) {
+    await UnifiedPushService.background();
+    return;
+  }
   final result = configFromEnvironment(isRelease: kReleaseMode);
   final prefs = await SharedPreferences.getInstance();
   final roots = AppRoots(
@@ -28,12 +32,6 @@ Future<void> main() async {
       url: config.supabaseUrl.toString(),
       anonKey: config.supabaseAnonKey!,
     );
-    if (config.pushEnabled) {
-      // Reads google-services.json / GoogleService-Info.plist. Firebase is
-      // never initialised in fake mode.
-      await Firebase.initializeApp();
-      FirebaseMessaging.onBackgroundMessage(octoBackgroundMessage);
-    }
   }
   runApp(
     buildApp(

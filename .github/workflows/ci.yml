@@ -97,4 +97,5 @@ jobs:
           arch: x86_64
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back emulated
-          script: flutter test integration_test --dart-define-from-file=config/fake.json
+          # The flow only: perf_test.dart traces frames, which needs `flutter drive --profile`.
+          script: flutter test integration_test/app_flow_test.dart --dart-define-from-file=config/fake.json

@@ -16,7 +16,7 @@ abstract final class ConfigKeys {
   /// redirect allow list). Defaults to `octo://auth-callback`.
   static const authRedirect = 'OCTO_AUTH_REDIRECT';
 
-  /// `firebase` turns push on (needs the Firebase config files).
+  /// `on` turns push on: APNs on iOS, UnifiedPush (ntfy) on Android.
   static const push = 'OCTO_PUSH';
 
   /// October's relay. Defaults to `https://relay.afteroctober.xyz`.
@@ -153,8 +153,8 @@ ConfigResult parseConfig(
     problems.add('${ConfigKeys.authRedirect} must be an app link or https URL');
   }
   final pushText = text(ConfigKeys.push);
-  if (pushText.isNotEmpty && pushText != 'firebase') {
-    problems.add('${ConfigKeys.push} must be firebase or empty');
+  if (pushText.isNotEmpty && pushText != 'on') {
+    problems.add('${ConfigKeys.push} must be on or empty');
   }
   if (problems.isNotEmpty) return ConfigProblem(problems);
   return ConfigOk(
@@ -164,7 +164,7 @@ ConfigResult parseConfig(
       supabaseUrl: supabaseUrl,
       supabaseAnonKey: anonKey.isEmpty ? null : anonKey,
       authRedirect: redirect!.toString(),
-      pushEnabled: pushText == 'firebase',
+      pushEnabled: pushText == 'on',
       relayUrl: relayUrl?.toString() ?? AppConfig.defaultRelayUrl,
     ),
   );

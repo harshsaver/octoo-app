@@ -53,11 +53,16 @@ class PushMessage {
   };
 }
 
-/// Notifications on this phone (PLAN §3.10). Registration with October is
+/// Notifications on this phone (PLAN §3.10): APNs on iOS, UnifiedPush
+/// (ntfy) on Android, no Firebase. Registration with October is
 /// [PushRegistrar]'s job; this only talks to the platform.
 abstract class PushService {
   /// Whether this build can receive pushes at all.
   bool get available;
+
+  /// Android: no UnifiedPush distributor (the ntfy app) is installed, so
+  /// notifications can't arrive until one is.
+  bool get needsDistributor => false;
 
   /// Prepares channels and listeners. Never asks for permission.
   Future<void> start();
@@ -80,10 +85,13 @@ abstract class PushService {
   Future<void> dispose();
 }
 
-/// Fake mode, or a build without Firebase settings: no pushes.
+/// Fake mode, or a build with push switched off: no pushes.
 class NoPush implements PushService {
   @override
   bool get available => false;
+
+  @override
+  bool get needsDistributor => false;
 
   final _taps = StreamController<PushMessage>.broadcast();
   final _foreground = StreamController<PushMessage>.broadcast();

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.october.octo",
+      "sha256_cert_fingerprints": [
+        "F6:8B:48:A7:90:A2:3E:8A:FE:E4:CB:12:F1:74:C3:06:BB:B6:DC:D1:A9:C0:CF:DD:D7:4E:13:19:DB:82:9B:7F"
+      ]
+    }
+  }
+]

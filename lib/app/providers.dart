@@ -17,9 +17,10 @@ import '../data/db/database.dart';
 import '../data/enrollment/enrollment_repository.dart';
 import '../data/profile_sync.dart';
 import '../data/relay_restore.dart';
-import '../data/push/firebase_push.dart';
+import '../data/push/apns_push.dart';
 import '../data/push/push_registrar.dart';
 import '../data/push/push_service.dart';
+import '../data/push/unified_push.dart';
 import '../data/screenshot_store.dart';
 import '../data/session/computer_session.dart';
 import '../data/session/session_data.dart';
@@ -127,9 +128,11 @@ final accessTokenProvider = Provider<Future<String?> Function()>(
 /// Notifications on this phone: Firebase when configured, otherwise none.
 final pushServiceProvider = Provider<PushService>((ref) {
   final config = ref.watch(appConfigProvider);
-  final PushService push = !config.isFake && config.pushEnabled
-      ? FirebasePush()
-      : NoPush();
+  final PushService push = config.isFake || !config.pushEnabled
+      ? NoPush()
+      : Platform.isIOS
+      ? ApnsPushService()
+      : UnifiedPushService();
   ref.onDispose(push.dispose);
   return push;
 });
