@@ -1,4 +1,4 @@
-package com.october.octo_family
+package dev.october.octo
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
