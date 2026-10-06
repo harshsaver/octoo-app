@@ -10,7 +10,7 @@ import '../l10n/app_localizations.dart';
 import '../ui/theme.dart';
 import '../data/account_scope.dart';
 import '../data/db/database.dart';
-import '../data/push/firebase_push.dart' show PushPrefsKeys;
+import '../data/push/local_notifications.dart' show PushPrefsKeys;
 import '../data/push/push_service.dart';
 import '../data/sign_out.dart';
 import '../features/lock/app_lock.dart';

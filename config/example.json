@@ -2,5 +2,6 @@
   "OCTO_MODE": "real",
   "OCTO_API_BASE": "https://www.october.dev",
   "SUPABASE_URL": "https://your-project.supabase.co",
-  "SUPABASE_ANON_KEY": "replace-with-the-anon-key"
+  "SUPABASE_ANON_KEY": "replace-with-the-anon-key",
+  "OCTO_PUSH": "on"
 }

@@ -173,8 +173,24 @@ class _SetupSheetState extends ConsumerState<SetupSheet> {
         ],
       ),
     );
-    if (allow == true && await push.requestPermission()) {
+    if (allow != true) return;
+    if (await push.requestPermission()) {
       await ref.read(pushRegistrarProvider).register();
+    } else if (push.needsDistributor && mounted) {
+      // Android without ntfy: say what's missing instead of failing quietly.
+      await showDialog<void>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: Text(l.ntfyTitle),
+          content: Text(l.ntfyBody),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(l.gotIt),
+            ),
+          ],
+        ),
+      );
     }
   }
 

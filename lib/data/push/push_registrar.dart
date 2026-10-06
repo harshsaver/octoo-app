@@ -14,12 +14,13 @@ class PushRegistrar {
     required this.deviceLabel,
     required this.appVersion,
     String? platform,
-  }) : platform = platform ?? (Platform.isIOS ? 'ios' : 'android');
+  }) : platform = platform ?? (Platform.isIOS ? 'ios' : 'unifiedpush');
 
   final PushService push;
   final OctoBackend backend;
   final String deviceLabel;
   final String? appVersion;
+  /// `ios` (an APNs token) or `unifiedpush` (ntfy endpoint and keys).
   final String platform;
   String? _registered;
   StreamSubscription<String>? _refresh;

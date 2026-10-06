@@ -34,3 +34,18 @@ For `https://octo.october.dev/...` links to open the app:
   `https://octo.october.dev/.well-known/assetlinks.json`. With Play App Signing, add Google's
   app-signing fingerprint (Play Console → App integrity) next to this one.
 - **iOS:** serve an `apple-app-site-association` file there once the Apple team id is known.
+
+## Notifications (no Firebase)
+
+`OCTO_PUSH=on` in the build config turns them on.
+
+- **Android: UnifiedPush with ntfy.** The phone needs the free ntfy app (Google Play or F-Droid)
+  as its distributor; the app explains this when someone allows notifications without it, and
+  registers by itself once ntfy is installed. It registers `{endpoint, p256dh, auth}` with
+  October (`platform: unifiedpush`), and the backend sends each push as Web Push encrypted for
+  the phone, so ntfy only relays ciphertext. Backend: saturday migration 056 and
+  `OCTO_UNIFIEDPUSH_HOSTS` (default `ntfy.sh`; add a self-hosted ntfy such as `ntfy.october.dev`).
+- **iOS: APNs directly.** Needs, from the Apple Developer account: the App ID `dev.october.octo`
+  with Push Notifications, and an APNs key (.p8) for the backend (`OCTO_APNS_KEY`,
+  `OCTO_APNS_KEY_ID`, `OCTO_APNS_TEAM_ID`, `OCTO_APNS_TOPIC=dev.october.octo`). The app's
+  entitlement (`ios/Runner/Runner.entitlements`) is in place.

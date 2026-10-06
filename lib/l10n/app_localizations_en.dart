@@ -965,6 +965,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notNow => 'Not now';
 
   @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get ntfyTitle => 'One more step for notifications';
+
+  @override
+  String get ntfyBody =>
+      'On Android, Octo\'s notifications come through the free ntfy app. Install ntfy from Google Play or F-Droid, then open Octo again.';
+
+  @override
   String get allowNotifications => 'Allow notifications';
 
   @override

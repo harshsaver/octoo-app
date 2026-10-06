@@ -1738,6 +1738,24 @@ abstract class AppLocalizations {
   /// **'Not now'**
   String get notNow;
 
+  /// No description provided for @gotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// No description provided for @ntfyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One more step for notifications'**
+  String get ntfyTitle;
+
+  /// No description provided for @ntfyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'On Android, Octo\'s notifications come through the free ntfy app. Install ntfy from Google Play or F-Droid, then open Octo again.'**
+  String get ntfyBody;
+
   /// No description provided for @allowNotifications.
   ///
   /// In en, this message translates to:

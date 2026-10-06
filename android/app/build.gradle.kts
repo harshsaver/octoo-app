@@ -71,3 +71,9 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
+
+// UnifiedPush's connector pulls Tink for the JVM and flutter_secure_storage
+// Tink for Android: the same classes twice. Keep the Android build (same API).
+configurations.all {
+    exclude(group = "com.google.crypto.tink", module = "tink")
+}
