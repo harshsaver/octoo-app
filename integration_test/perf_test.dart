@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../test/support/scripted_link.dart';
 
 /// PLAN §5 performance, in a profile build on a device:
-///   flutter drive --profile --driver=test_driver/perf_driver.dart \
+///   flutter drive --profile --no-dds --driver=test_driver/perf_driver.dart \
 ///     --target=integration_test/perf_test.dart
 /// Reports the time to the list and the frame times while 50 steps of a
 /// task stream into an open thread (build/steps.timeline_summary.json).

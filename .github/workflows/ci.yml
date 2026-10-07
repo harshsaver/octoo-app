@@ -127,7 +127,9 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           # PLAN §5: time to the list, and frames while 50 steps stream in.
-          script: flutter drive --profile --driver=test_driver/perf_driver.dart --target=integration_test/perf_test.dart --dart-define-from-file=config/fake.json | tee perf.log
+          # --no-dds: frame tracing connects to the app's own VM service, which DDS would front.
+          # The exit status is flutter drive's, not the log's.
+          script: flutter drive --profile --no-dds --driver=test_driver/perf_driver.dart --target=integration_test/perf_test.dart --dart-define-from-file=config/fake.json > perf.log 2>&1; status=$?; cat perf.log; exit $status
       - name: Report
         if: always()
         run: python3 tool/perf_report.py perf.log build/steps.timeline_summary.json >> "$GITHUB_STEP_SUMMARY"
