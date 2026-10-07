@@ -58,13 +58,15 @@ abstract class EnrollmentRepository {
 }
 
 /// The enrollment link: `https://www.october.dev/octo/add#<enrollId>.<claimSecret>`
-/// (or `october.dev`), with the backend's formats: `en_` + 24 hex, and a
+/// (or `october.dev`, or Octo's home `https://octo.october.dev/add#…`), with the backend's formats: `en_` + 24 hex, and a
 /// 43-character base64url secret. Null for anything else.
 ({String enrollId, String secret})? parseEnrollmentLink(String value) {
   final uri = Uri.tryParse(value.trim());
   if (uri == null || uri.scheme != 'https') return null;
-  if (uri.host != 'www.october.dev' && uri.host != 'october.dev') return null;
-  if (uri.path != '/octo/add' ||
+  final octoHome = uri.host == 'octo.october.dev';
+  if (!octoHome && uri.host != 'www.october.dev' && uri.host != 'october.dev') return null;
+  // october.dev/octo/add, or Octo's own home octo.october.dev/add.
+  if (uri.path != (octoHome ? '/add' : '/octo/add') ||
       uri.hasQuery ||
       uri.userInfo.isNotEmpty ||
       uri.hasPort) {

@@ -26,8 +26,10 @@ the real screen. `--no-agent` simulates tasks instead.
   migration 054 in production). If it isn't, a task ends with the backend's
   own sentence (for example that Octo isn't available yet).
 - Screenshots and control use the desktop portal (GNOME/KDE on Wayland):
-  the first screenshot may ask "Allow screenshot?" and the first click
-  "Allow remote interaction?", once each. Needs `python3-gobject` and
+  the first screenshot may ask "Allow screenshot?" and the first action
+  asks to share the screen: **turn on "Allow remote interaction"** in that
+  dialog, or the agent can't click or type (the test Octo then forgets the
+  choice and asks again). Both are remembered after that. Needs `python3-gobject` and
   ImageMagick (`magick`), both standard on Fedora.
 
 ## Run

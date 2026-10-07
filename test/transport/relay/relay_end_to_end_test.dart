@@ -505,6 +505,25 @@ void main() {
     await sub.cancel();
   }, timeout: const Timeout(Duration(minutes: 1)));
 
+  test("octo.hello tells the phone its helper id; it's kept with the pairing", () async {
+    final paired = ((await pair()).last as PairingPaired).computer;
+    // Pairing's own Octo check already asked.
+    expect(link.helperIdFor(paired.computerId), paired.bind);
+    final states = <LinkState>[];
+    final sub = link.connect(paired.computerId).listen(states.add);
+    await _until(() => states.contains(LinkState.connected));
+    // The test Octo uses the binding as the helper id (task.from).
+    expect(link.helperIdFor(paired.computerId), paired.bind);
+    final vault = link.vault as MemoryVault;
+    expect(vault.bindings.values.single.helperId, paired.bind);
+    // A fresh link (after a restart) knows it before connecting.
+    final restarted = newLink();
+    await restarted.loadHelperIds(october.userId);
+    expect(restarted.helperIdFor(paired.computerId), paired.bind);
+    restarted.dispose();
+    await sub.cancel();
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
   test('a link that is not an October pairing code', () async {
     final progress = await link.pair('https://october.dev/pair#nope', helperName: 'H', deviceLabel: 'D').toList();
     expect((progress.single as PairingFailed).kind, PairingFailureKind.invalidCode);

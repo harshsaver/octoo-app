@@ -13,7 +13,7 @@ import 'simulated_computer.dart';
 /// Every message crosses a JSON encode/decode with [latency], so the app sees
 /// exactly what a wire would carry. Messages her computer sends while the
 /// link is down are lost, as they would be over the relay.
-class SimulatorLink implements OctoLink {
+class SimulatorLink implements OctoLink, HelperIdentity {
   SimulatorLink({
     SimulatorSettings? settings,
     Random? random,
@@ -46,6 +46,7 @@ class SimulatorLink implements OctoLink {
 
   /// This app's helper id on [computerId] (what `task.from` says for tasks
   /// sent from here).
+  @override
   String? helperIdFor(String computerId) => _endpoints[computerId]?.helperId;
 
   /// Fires when computers are added or removed.
@@ -420,10 +421,13 @@ class SimulatorLink implements OctoLink {
       return (computer: name, person: possessive?.group(1) ?? fallback.person);
     }
     final uri = Uri.tryParse(p);
+    final enrollPath = uri == null
+        ? false
+        : ((uri.host == 'www.october.dev' || uri.host == 'october.dev') && uri.path == '/octo/add') ||
+              (uri.host == 'octo.october.dev' && uri.path == '/add');
     if (uri != null &&
         uri.scheme == 'https' &&
-        (uri.host == 'www.october.dev' || uri.host == 'october.dev') &&
-        uri.path == '/octo/add' &&
+        enrollPath &&
         RegExp(r'^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$').hasMatch(uri.fragment)) {
       return fallback;
     }

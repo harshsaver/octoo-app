@@ -75,6 +75,7 @@ class RelayBinding {
     BindingPhase? phase,
     this.startedAt,
     this.profile,
+    this.helperId,
   }) : phase = phase ?? (credential == null ? BindingPhase.started : BindingPhase.complete);
 
   factory RelayBinding.fromJson(Map<String, Object?> json) => RelayBinding(
@@ -90,6 +91,7 @@ class RelayBinding {
     phase: BindingPhase.values.asNameMap()[json['phase']],
     startedAt: (json['startedAt'] as num?)?.toInt(),
     profile: BindingProfile.fromJson(json['profile']),
+    helperId: json['helperId'] as String?,
   );
 
   final String computerId;
@@ -115,10 +117,14 @@ class RelayBinding {
   final int? startedAt;
   final BindingProfile? profile;
 
+  /// This phone's helper id on her computer, from `octo.hello`.
+  final String? helperId;
+
   /// Has a credential, so it can connect.
   bool get usable => credential != null && phase != BindingPhase.started;
 
-  RelayBinding copyWith({String? credential, BindingPhase? phase, BindingProfile? profile}) => RelayBinding(
+  RelayBinding copyWith({String? credential, BindingPhase? phase, BindingProfile? profile, String? helperId}) =>
+      RelayBinding(
     computerId: computerId,
     userId: userId,
     hostId: hostId,
@@ -131,6 +137,7 @@ class RelayBinding {
     phase: phase ?? this.phase,
     startedAt: startedAt,
     profile: profile ?? this.profile,
+    helperId: helperId ?? this.helperId,
   );
 
   Map<String, Object?> toJson() => {
@@ -146,6 +153,7 @@ class RelayBinding {
     'phase': phase.name,
     'startedAt': ?startedAt,
     'profile': ?profile?.toJson(),
+    'helperId': ?helperId,
   };
 }
 

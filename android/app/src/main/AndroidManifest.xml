@@ -40,6 +40,14 @@
                 <data android:scheme="https" android:host="www.october.dev" android:path="/octo/add" />
                 <data android:scheme="https" android:host="october.dev" android:path="/octo/add" />
             </intent-filter>
+            <!-- Octo's own home: https://octo.october.dev/add#… (verified by
+                 docs/well-known/assetlinks.json served from that host). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="octo.october.dev" android:path="/add" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

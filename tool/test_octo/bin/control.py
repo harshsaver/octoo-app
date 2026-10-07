@@ -68,6 +68,7 @@ class Portal:
         self.session = None
         self.stream = None
         self.size = None
+        self.devices = 0
 
     def request(self, iface, method, build):
         """Calls a portal method that answers through a Request object."""
@@ -118,12 +119,21 @@ class Portal:
         self.request(SC, "SelectSources", lambda t: GLib.Variant("(oa{sv})", (self.session, {
             "handle_token": t, "types": GLib.Variant("u", 1), "multiple": GLib.Variant("b", False)})))
         res = self.request(RD, "Start", lambda t: GLib.Variant("(osa{sv})", (self.session, "", {"handle_token": t})))
-        token = res.get("restore_token")
+        token = res.get("restore_token") if int(res.get("devices", 0)) & 3 == 3 else None
         if token:
             os.makedirs(os.path.dirname(self.token_file), exist_ok=True)
             with open(self.token_file, "w") as f:
                 f.write(token)
             os.chmod(self.token_file, 0o600)
+        # What the person allowed: 1 keyboard, 2 pointer. Sharing the screen
+        # without "Allow remote interaction" grants neither: forget that
+        # choice so the next start asks again.
+        self.devices = int(res.get("devices", 0))
+        if self.devices & 3 != 3:
+            self.session = None
+            if os.path.exists(self.token_file):
+                os.remove(self.token_file)
+            raise RuntimeError('remote control was not allowed: in the dialog, turn on "Allow remote interaction"')
         streams = res.get("streams") or []
         if not streams:
             raise RuntimeError("no screen was shared")
@@ -184,7 +194,8 @@ def main():
             op = cmd.get("op")
             portal.start()
             if op == "start":
-                out = {"ok": True, "width": portal.size[0], "height": portal.size[1]}
+                out = {"ok": True, "width": portal.size[0], "height": portal.size[1],
+                       "keyboard": bool(portal.devices & 1), "pointer": bool(portal.devices & 2)}
             elif op == "click":
                 portal.click(float(cmd["fx"]), float(cmd["fy"]), bool(cmd.get("double")))
                 out = {"ok": True}

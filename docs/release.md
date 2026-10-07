@@ -28,7 +28,9 @@ The script refuses anything but real mode first.
 
 ## Links on octo.october.dev
 
-For `https://octo.october.dev/...` links to open the app:
+The app opens `https://octo.october.dev/add#<enrollId>.<secret>` (Octo's own form of
+`www.october.dev/octo/add#…`, which keeps working) straight into pairing. For the link to open the
+app rather than the browser:
 
 - **Android:** serve `docs/well-known/assetlinks.json` at
   `https://octo.october.dev/.well-known/assetlinks.json`. With Play App Signing, add Google's

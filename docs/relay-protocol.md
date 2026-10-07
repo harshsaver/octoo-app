@@ -72,7 +72,9 @@ The first request on every connection, sent before `sub`:
 {"method": "octo.hello", "payload": {"app": "octo-family", "protocol": 1}}
 ```
 
-An Octo computer answers `{"ok": true, "result": {"octo": 1, "computer": "Mom's laptop", "person": "Mom"}}`.
+An Octo computer answers `{"ok": true, "result": {"octo": 1, "computer": "Mom's laptop", "person": "Mom", "helperId": "<id>"}}`.
+`helperId` is what `task.from` will say for tasks this phone sends (the test Octo uses the binding
+id); the app uses it to know which tasks are its own instead of guessing.
 Anything else means the computer is October Desktop without Octo (its core
 answers `"ok": false`, and ends the session when the phone subscribes to
 `octo.family`). The phone then says "Not running Octo" and stops retrying.

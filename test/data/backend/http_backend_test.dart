@@ -282,6 +282,25 @@ void main() {
         ),
         isNotNull,
       );
+      // Octo's own home: /add there, not /octo/add.
+      expect(
+        parseEnrollmentLink(
+          'https://octo.october.dev/add#en_${'0' * 24}.${'s' * 43}',
+        ),
+        isNotNull,
+      );
+      expect(
+        parseEnrollmentLink(
+          'https://octo.october.dev/octo/add#en_${'0' * 24}.${'s' * 43}',
+        ),
+        isNull,
+      );
+      expect(
+        parseEnrollmentLink(
+          'https://www.october.dev/add#en_${'0' * 24}.${'s' * 43}',
+        ),
+        isNull,
+      );
       expect(
         parseEnrollmentLink(
           'http://www.october.dev/octo/add#en_${'0' * 24}.${'s' * 43}',
