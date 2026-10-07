@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:octo_family/features/octos_list/octos_list_screen.dart';
 import 'package:octo_family/app/app.dart';
 import 'package:octo_family/app/app_settings.dart';
 import 'package:octo_family/app/config.dart';
@@ -87,6 +89,19 @@ void main() {
     await settle(tester);
     expect(find.text('Add your first Octo'), findsOneWidget);
     expect(find.text('On your October account'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(minutes: 10));
+  });
+
+  testWidgets('an octo.october.dev/add link opens pairing with its code', (tester) async {
+    await tester.pumpWidget(app());
+    await settle(tester);
+    GoRouter.of(tester.element(find.byType(OctosListScreen))).go('/add#en_${'0' * 24}.${'s' * 43}');
+    await settle(tester);
+    await tester.pump(const Duration(seconds: 1));
+    // Straight into pairing with the simulated computer: the key to compare.
+    expect(find.text('They match'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(minutes: 10));

@@ -54,7 +54,12 @@ GoRouter buildRouter(AuthService auth, AuthRefresh refresh) => GoRouter(
       routes: [
         GoRoute(
           path: 'add',
-          builder: (context, state) => const AddOctoScreen(),
+          // Also Octo's own link: https://octo.october.dev/add#<id>.<secret>.
+          builder: (context, state) => AddOctoScreen(
+            initialPayload: state.uri.fragment.isEmpty
+                ? null
+                : 'https://octo.october.dev/add#${state.uri.fragment}',
+          ),
         ),
       ],
     ),

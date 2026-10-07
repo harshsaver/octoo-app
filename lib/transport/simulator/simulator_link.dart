@@ -421,10 +421,13 @@ class SimulatorLink implements OctoLink, HelperIdentity {
       return (computer: name, person: possessive?.group(1) ?? fallback.person);
     }
     final uri = Uri.tryParse(p);
+    final enrollPath = uri == null
+        ? false
+        : ((uri.host == 'www.october.dev' || uri.host == 'october.dev') && uri.path == '/octo/add') ||
+              (uri.host == 'octo.october.dev' && uri.path == '/add');
     if (uri != null &&
         uri.scheme == 'https' &&
-        (uri.host == 'www.october.dev' || uri.host == 'october.dev') &&
-        uri.path == '/octo/add' &&
+        enrollPath &&
         RegExp(r'^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$').hasMatch(uri.fragment)) {
       return fallback;
     }
