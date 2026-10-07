@@ -968,6 +968,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
+  String get pairAgainSection => 'On your October account';
+
+  @override
+  String get pairAgain => 'Pair again on this phone';
+
+  @override
   String get ntfyTitle => 'One more step for notifications';
 
   @override

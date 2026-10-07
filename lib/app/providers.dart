@@ -260,6 +260,26 @@ final profileSyncProvider = Provider<ProfileSync>((ref) {
 });
 
 /// The computers on this phone (not those being removed).
+/// Computers October lists for this person that this phone has no keys for
+/// (a new phone, a reinstall): the list offers "Pair again on this phone"
+/// (PLAN §3.8). Empty when the backend can't be reached.
+final unpairedComputersProvider = FutureProvider<List<BackendComputer>>((ref) async {
+  if (ref.watch(accountProvider).isSignedOut) return const [];
+  // Recomputed whenever the list changes (a computer added or removed).
+  ref.watch(computersProvider);
+  final local = await ref.watch(databaseProvider).allComputers(); // tombstones too
+  final known = {for (final r in local) r.id};
+  try {
+    final listed = await ref.watch(backendProvider).listComputers();
+    return [
+      for (final c in listed)
+        if (!known.contains(c.id) && !isRelayComputerId(c.id)) c,
+    ];
+  } on BackendException {
+    return const [];
+  }
+});
+
 final computersProvider = StreamProvider<List<ComputerRow>>(
   (ref) => ref
       .watch(databaseProvider)

@@ -67,6 +67,7 @@ class _OctosListScreenState extends ConsumerState<OctosListScreen> {
     final l = AppLocalizations.of(context);
     final colors = OctoTheme.of(context);
     final computers = ref.watch(computersProvider);
+    final unpaired = ref.watch(unpairedComputersProvider).value ?? const <BackendComputer>[];
     final isFake = ref.watch(appConfigProvider).isFake;
     final now = clock.now();
 
@@ -182,12 +183,12 @@ class _OctosListScreenState extends ConsumerState<OctosListScreen> {
                 hasScrollBody: false,
                 child: Center(child: CircularProgressIndicator.adaptive()),
               )
-            else if (rows.isEmpty)
+            else if (rows.isEmpty && unpaired.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: _EmptyState(onAdd: () => context.push('/add')),
               )
-            else if (visible!.isEmpty)
+            else if (visible!.isEmpty && rows.isNotEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
@@ -228,6 +229,24 @@ class _OctosListScreenState extends ConsumerState<OctosListScreen> {
                   onToggleRead: () => _toggleRead(visible[i]),
                 ),
               ),
+            if (rows != null && unpaired.isNotEmpty && !_editing && _search.text.isEmpty) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(OctoSpace.lg, OctoSpace.xl, OctoSpace.lg, OctoSpace.xs),
+                  child: Text(
+                    l.pairAgainSection,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: colors.secondaryLabel),
+                  ),
+                ),
+              ),
+              SliverList.builder(
+                itemCount: unpaired.length,
+                itemBuilder: (context, i) => _PairAgainRow(
+                  computer: unpaired[i],
+                  onTap: () => context.push('/add'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -619,6 +638,29 @@ class _EditRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A computer on this person's October account with no keys on this phone.
+class _PairAgainRow extends StatelessWidget {
+  const _PairAgainRow({required this.computer, required this.onTap});
+
+  final BackendComputer computer;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final colors = OctoTheme.of(context);
+    final name = computer.person.isEmpty ? computer.name : computer.person;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: OctoSpace.lg, vertical: OctoSpace.xs),
+      leading: OctoAvatar(look: OctoLook.fromId(computer.octo), size: 48, mood: OctoMood.sleepy),
+      title: Text(name),
+      subtitle: Text(l.pairAgain, style: TextStyle(color: colors.accentText)),
+      trailing: const Icon(Icons.qr_code_scanner),
+      onTap: onTap,
     );
   }
 }

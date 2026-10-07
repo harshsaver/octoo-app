@@ -1744,6 +1744,18 @@ abstract class AppLocalizations {
   /// **'Got it'**
   String get gotIt;
 
+  /// No description provided for @pairAgainSection.
+  ///
+  /// In en, this message translates to:
+  /// **'On your October account'**
+  String get pairAgainSection;
+
+  /// No description provided for @pairAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair again on this phone'**
+  String get pairAgain;
+
   /// No description provided for @ntfyTitle.
   ///
   /// In en, this message translates to:

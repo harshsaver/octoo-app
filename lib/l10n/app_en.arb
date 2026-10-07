@@ -699,6 +699,8 @@
   "pushOpen": "Open",
   "notNow": "Not now",
   "gotIt": "Got it",
+  "pairAgainSection": "On your October account",
+  "pairAgain": "Pair again on this phone",
   "ntfyTitle": "One more step for notifications",
   "ntfyBody": "On Android, Octo's notifications come through the free ntfy app. Install ntfy from Google Play or F-Droid, then open Octo again.",
   "allowNotifications": "Allow notifications",
