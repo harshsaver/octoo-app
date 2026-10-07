@@ -13,7 +13,7 @@ import 'simulated_computer.dart';
 /// Every message crosses a JSON encode/decode with [latency], so the app sees
 /// exactly what a wire would carry. Messages her computer sends while the
 /// link is down are lost, as they would be over the relay.
-class SimulatorLink implements OctoLink {
+class SimulatorLink implements OctoLink, HelperIdentity {
   SimulatorLink({
     SimulatorSettings? settings,
     Random? random,
@@ -46,6 +46,7 @@ class SimulatorLink implements OctoLink {
 
   /// This app's helper id on [computerId] (what `task.from` says for tasks
   /// sent from here).
+  @override
   String? helperIdFor(String computerId) => _endpoints[computerId]?.helperId;
 
   /// Fires when computers are added or removed.

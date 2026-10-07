@@ -20,6 +20,13 @@ abstract class OctoLink {
 }
 // dart format on
 
+/// A link that knows this phone's helper id on a computer (what `task.from`
+/// says for tasks sent from here), so the app needn't guess which tasks are
+/// mine (PLAN §3.7). Null when not known yet.
+abstract interface class HelperIdentity {
+  String? helperIdFor(String computerId);
+}
+
 /// The state of a [OctoLink.connect] stream. Cancelling that subscription
 /// disconnects.
 enum LinkState {

@@ -203,7 +203,8 @@ class TestOcto implements HostDelegate {
     final payload = envelope['payload'];
     switch (envelope['method']) {
       case helloMethod:
-        return ok({'octo': familyProtocol, 'computer': computer.computerName, 'person': computer.person});
+        // helperId: what task.from says for this phone's tasks (its binding).
+        return ok({'octo': familyProtocol, 'computer': computer.computerName, 'person': computer.person, 'helperId': session.bind});
       case familyMethod when payload is Map<String, Object?>:
         say('← ${payload['type']}');
         computer.receive(payload, from: session.bind);

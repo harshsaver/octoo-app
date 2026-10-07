@@ -239,6 +239,7 @@ final sessionsStartupProvider = FutureProvider<void>((ref) async {
         pairingNow: link.pairingNow,
         now: DateTime.now(),
       );
+      await link.loadHelperIds(account.userId);
     } on Object {
       // Secure storage unavailable: the list stays as it is; next start retries.
     }
@@ -326,9 +327,12 @@ final sessionDataProvider = StreamProvider.family<SessionData, String>((
 /// Who this phone is, for one computer.
 final meProvider = Provider.family<MeIdentity, String>((ref, id) {
   final data = ref.watch(sessionDataProvider(id)).value;
+  // Said by the computer (octo.hello) when the link knows it; else learned.
+  final link = ref.watch(octoLinkProvider);
+  final told = link is HelperIdentity ? (link as HelperIdentity).helperIdFor(id) : null;
   return MeIdentity(
     name: ref.watch(accountProvider).name,
-    helperId: data?.myHelperId,
+    helperId: told ?? data?.myHelperId,
   );
 });
 

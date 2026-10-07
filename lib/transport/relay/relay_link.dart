@@ -54,7 +54,7 @@ PairingQr? parsePairingLink(String value) {
 ///
 /// Family JSON goes to her computer as `req` frames (method `octo.message`)
 /// and comes back as `ev` lines on topic `octo.family`.
-class RelayLink implements OctoLink {
+class RelayLink implements OctoLink, HelperIdentity {
   RelayLink({
     required this.control,
     required this.vault,
@@ -420,6 +420,7 @@ class RelayLink implements OctoLink {
       if (!hello.ok || result is! Map<String, Object?> || result['octo'] != familyProtocol) {
         throw const NotOctoException();
       }
+      await _rememberHelperId(computerId, binding, result['helperId']);
       await c.sendJson(FrameKind.sub, {
         'cursor': null,
         'topics': [familyTopic],
@@ -429,6 +430,30 @@ class RelayLink implements OctoLink {
     } on Object {
       live.close();
       rethrow;
+    }
+  }
+
+  final Map<String, String> _helperIds = {};
+
+  @override
+  String? helperIdFor(String computerId) => _helperIds[computerId];
+
+  /// The computer says who this phone is (`octo.hello` → `helperId`); kept
+  /// with the pairing so it's known offline and after a restart.
+  Future<void> _rememberHelperId(String computerId, RelayBinding binding, Object? helperId) async {
+    final id = helperId is String && helperId.isNotEmpty ? helperId : binding.helperId;
+    if (id == null) return;
+    _helperIds[computerId] = id;
+    if (binding.helperId != id) {
+      final current = await vault.read(binding.userId, computerId);
+      if (current != null) await vault.write(current.copyWith(helperId: id));
+    }
+  }
+
+  /// Loads helper ids saved with earlier pairings.
+  Future<void> loadHelperIds(String userId) async {
+    for (final b in await vault.list(userId)) {
+      if (b.helperId != null) _helperIds[b.computerId] = b.helperId!;
     }
   }
 
